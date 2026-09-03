@@ -74,24 +74,30 @@ same way as the test package above. For this phone specifically:
 
 ## In-progress work
 
-`~/pmos-fp6-nfc/` — first real porting attempt, started 2026-09-03: an NFC
-device-tree patch for `milos-fairphone-fp6.dts` (not yet upstream-submitted)
-plus the matching kernel config commit already applied in the local
-`/root/pmaports` clone (inside the alpine container). Contains:
-- `0001-*.patch` — the DTS patch itself.
-- `milos-fairphone-fp6.dts.patched` — full file with the patch applied, for
-  reference/rebasing.
-- `reference-fairphone-nfc-devicetree/`, `reference-fairphone-nfc-driver/` —
-  Fairphone's own published GPL sources this patch's GPIO wiring was taken
-  from (not guessed) — see `code.fairphone.com/projects/fairphone-gen-6/`
-  for how to find these repos on `gerrit-public.fairphone.software` for
-  other subsystems too (camera-devicetree, bt-devicetree, etc. — same
-  pattern, real hardware wiring straight from the source rather than
-  reverse-engineering blind).
-- Known open risk: vendor driver config filenames reference "rn4v", which
-  reads as a newer Samsung NFC chip generation than S3FWRN5 (the mainline
-  driver target used in the patch). Needs real-hardware testing to confirm
-  protocol compatibility — this is the first thing to check once it boots.
+**`~/fp6_pmOS/`** is the canonical project repo (github.com/aubreybailey/
+fp6_pmOS) — this skill itself lives there (`skills/postmarketos-dev/`,
+symlinked into `~/.claude/skills/`), alongside `patches/` and
+`docs/status.md`. Check there first, and push real progress back to it
+(git remote already authenticated via `gh`) rather than leaving work
+sitting only in the proot container or scratchpad, which don't persist
+across sessions the same way.
+
+First real porting attempt, started 2026-09-03, is in
+`~/fp6_pmOS/patches/nfc/` — an NFC device-tree patch for
+`milos-fairphone-fp6.dts` (not yet upstream-submitted) plus the matching
+kernel config commit already applied in the local `/root/pmaports` clone
+(inside the alpine container) and exported as a second patch file. See
+`patches/nfc/NOTES.md` for full sourcing and the known open risk (vendor
+driver config filenames reference "rn4v", suggesting a newer Samsung NFC
+chip generation than S3FWRN5, the mainline driver target used in the
+patch — needs real-hardware testing to confirm protocol compatibility).
+
+Fairphone's own published GPL sources (real GPIO wiring, not guessed) are
+on `gerrit-public.fairphone.software` — see
+`code.fairphone.com/projects/fairphone-gen-6/kernel.html` for the repo
+list (camera-devicetree, bt-devicetree, etc. — same pattern works for
+other subsystems). Clone whichever's relevant straight into a scratch dir
+when needed rather than re-deriving wiring from guesswork.
 
 ## Resource notes
 
