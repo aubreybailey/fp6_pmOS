@@ -4,6 +4,11 @@ Working notes, patches, and Claude Code skills for developing postmarketOS
 for the Fairphone 6, from directly on the device (Termux + proot Alpine,
 native aarch64 — no cross-compilation needed).
 
+**Picking this up fresh (including on a different machine/OS boot, e.g. a
+Claude Code instance running under booted pmOS itself)? Read
+[`HANDOFF.md`](HANDOFF.md) first** — current priorities and open
+questions, kept up to date rather than historical.
+
 ## Layout
 
 - `skills/` — Claude Code skills (symlinked into `~/.claude/skills/` on
