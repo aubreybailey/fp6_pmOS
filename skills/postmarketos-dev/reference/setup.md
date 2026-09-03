@@ -84,6 +84,59 @@ gets reinstalled as a dependency of something else).
 Worth checking whether a later Alpine clang22 point release fixes this
 before repeating the swap in a fresh container.
 
+Alpine's `clang21`/`lld21` packages only version the compiler/linker
+proper — not the rest of LLVM's binutils. Anything under `tools/` (BPF
+tooling, `resolve_btfids`, etc.) derives tool names by literally appending
+`-21` to `llvm-nm`/`llvm-objcopy`/`llvm-readelf`/etc. and won't find them.
+Fix once, for the whole container:
+
+```
+ln -sf /usr/bin/ld.lld /usr/bin/ld.lld-21
+ln -sf /usr/bin/llvm-nm /usr/bin/llvm-nm-21
+ln -sf /usr/bin/llvm-objcopy /usr/bin/llvm-objcopy-21
+ln -sf /usr/bin/llvm-readelf /usr/bin/llvm-readelf-21
+ln -sf /usr/bin/llvm-strip /usr/bin/llvm-strip-21
+ln -sf /usr/bin/llvm-ar /usr/bin/llvm-ar-21
+ln -sf /usr/bin/llvm-objdump /usr/bin/llvm-objdump-21
+```
+
+After this, plain `LLVM=-21` (no other overrides) is enough.
+
+## Two more one-time build-environment gaps (this specific kernel source)
+
+Hit while getting a real driver module (not just a `.dtb`) to compile —
+both are gaps in `milos-mainline/linux`'s own tree, not this container:
+
+- **`tools/include/uapi/asm-generic/int-ll64.h` is missing** from this
+  fork's `tools/` uapi header mirror (present in any normal kernel tree;
+  looks like it fell out of sync at some point). Breaks `scripts/sign-file`
+  and anything else under `tools/` that pulls in `linux/types.h`. Fix:
+  `cp include/uapi/asm-generic/int-ll64.h tools/include/uapi/asm-generic/`
+- **`CONFIG_DEBUG_INFO_BTF=y`** (on by default in this defconfig) pulls in
+  `tools/bpf/resolve_btfids`, an entire separate BPF host-tool build
+  that's unrelated to whatever you're actually testing and adds several
+  more build-environment gaps of its own. For a targeted single-driver
+  build-test, disable it first: `scripts/config --disable
+  CONFIG_DEBUG_INFO_BTF` then `olddefconfig` — this is a local test-only
+  change, don't carry it into an actual patch/config commit.
+
+## Testing a single driver module without a full kernel build
+
+```
+make ARCH=arm64 LLVM=-21 M=drivers/<subsystem>/<driver> modules
+```
+
+Needs `modules_prepare` to have completed first (generates
+`asm-offsets.h` and friends). Expect a `Module.symvers is missing` warning
+and `undefined symbol` errors from `modpost` at the very end — that's
+normal and not a real problem: `Module.symvers` only gets built by a full
+`vmlinux`/`modules` pass over the *entire* kernel (so it has every
+`EXPORT_SYMBOL` to check against), which a targeted single-directory build
+deliberately skips. If every `.c` file in the target directory shows a
+clean `CC [M]` with no errors, the driver source itself is confirmed
+building correctly against this kernel version — that's the actual signal
+worth reading, not the modpost tail.
+
 ## Testing a single .dts file without a full kernel build
 
 Don't run a full `make` for validating a devicetree patch — compiling one

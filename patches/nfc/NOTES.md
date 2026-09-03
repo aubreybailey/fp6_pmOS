@@ -38,11 +38,19 @@ produces a real `.dtb`, zero warnings or errors. Confirms every phandle
 reference in the patch (`&tlmm`, `&i2c1`, `IRQ_TYPE_EDGE_RISING`,
 `GPIO_ACTIVE_HIGH`, the two new pinctrl states) resolves correctly.
 
-**Driver module compile**: not completed. Hit an unrelated
-`include/generated/asm-offsets.h` generation issue in this from-scratch
-build environment when compiling `drivers/nfc/s3fwrn5/core.c` — that file
-is pre-existing upstream code, untouched by this patch, so this is an
-environment gap to chase separately, not a defect in what we changed here.
+**Driver module compile**: completed. `core.c`, `firmware.c`, `nci.c`,
+`phy_common.c`, `i2c.c` all compile clean (`CC [M]`, no errors) against
+this kernel version. Getting there required three unrelated
+build-environment fixes in the Alpine container/kernel source (missing
+`tools/` uapi header, missing versioned LLVM binutils symlinks, BTF
+pulling in an unrelated BPF toolchain) — all now documented in the
+`postmarketos-dev` skill's `setup.md` so they don't need rediscovering.
+Final step (`modpost`) reports undefined symbols and a missing
+`Module.symvers` — expected and not a real problem: that file only gets
+built by a full `vmlinux`/`modules` pass over the entire kernel, which a
+targeted single-directory build deliberately skips (avoided here given
+this device's real memory pressure during builds). The compile step is
+the meaningful signal, and it's clean.
 
 **Toolchain note for next time**: this container's default `clang22`
 package can't link the kernel's own Kconfig host tools under Alpine's musl
