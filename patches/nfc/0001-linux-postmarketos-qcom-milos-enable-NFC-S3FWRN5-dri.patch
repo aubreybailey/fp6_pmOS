@@ -1,0 +1,40 @@
+From f03bafb89ba2a5ab3128503336467fae995e1f18 Mon Sep 17 00:00:00 2001
+From: Aubrey Bailey <aubreybailey@gmail.com>
+Date: Thu, 3 Sep 2026 09:11:21 +0000
+Subject: [PATCH] linux-postmarketos-qcom-milos: enable NFC (S3FWRN5 driver)
+
+The Fairphone 6 has a Samsung NFC controller on i2c1@0x27 (already
+noted as a comment in the device dts) but CONFIG_NFC was entirely
+disabled. Enable it plus the mainline S3FWRN5 I2C driver, the closest
+mainline match for this hardware family.
+
+Companion devicetree patch (not yet in this tree - milos-fairphone-fp6.dts
+lives in github.com/milos-mainline/linux, not pmaports) adds the actual
+i2c device node with GPIO wiring taken from Fairphone published GPL
+sources (nfc-devicetree repo, samsung/volcano-nfc-samsung-sec-slsi.dtsi).
+
+UNVERIFIED: exact chip generation - vendor driver config filenames
+reference "rn4v", suggesting a newer Samsung NFC IC than S3FWRN5.
+Needs real-hardware testing to confirm protocol compatibility.
+---
+ .../config-postmarketos-qcom-milos.aarch64                    | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/device/testing/linux-postmarketos-qcom-milos/config-postmarketos-qcom-milos.aarch64 b/device/testing/linux-postmarketos-qcom-milos/config-postmarketos-qcom-milos.aarch64
+index d18ea43..5f8bffc 100644
+--- a/device/testing/linux-postmarketos-qcom-milos/config-postmarketos-qcom-milos.aarch64
++++ b/device/testing/linux-postmarketos-qcom-milos/config-postmarketos-qcom-milos.aarch64
+@@ -1629,7 +1629,9 @@ CONFIG_RFKILL_INPUT=y
+ # CONFIG_RFKILL_GPIO is not set
+ # CONFIG_NET_9P is not set
+ # CONFIG_CEPH_LIB is not set
+-# CONFIG_NFC is not set
++CONFIG_NFC=y
++CONFIG_NFC_S3FWRN5=m
++CONFIG_NFC_S3FWRN5_I2C=m
+ # CONFIG_PSAMPLE is not set
+ # CONFIG_NET_IFE is not set
+ # CONFIG_LWTUNNEL is not set
+-- 
+2.54.0
+

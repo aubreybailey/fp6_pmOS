@@ -1,0 +1,66 @@
+--- a/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts	2026-09-03 05:09:41.680340799 -0400
++++ b/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts	2026-09-03 05:09:57.076340793 -0400
+@@ -700,9 +700,42 @@
+ };
+ 
+ &i2c1 {
+-	/* Samsung NFC @ 0x27 */
+-
+ 	status = "okay";
++
++	/*
++	 * Samsung NFC controller.
++	 *
++	 * GPIO wiring below is taken directly from Fairphone's published
++	 * GPL devicetree source for this hardware (samsung/volcano-nfc-
++	 * samsung-sec-slsi.dtsi in their nfc-devicetree repo), not guessed.
++	 *
++	 * UNVERIFIED: the exact chip generation. Fairphone's vendor driver
++	 * config filenames reference "rn4v", which looks like a newer
++	 * Samsung NFC IC generation than S3FWRN5 (the chip the mainline
++	 * "samsung,s3fwrn5-i2c" driver targets below). The transport-level
++	 * protocol has stayed similar across generations, so this may well
++	 * probe and work, but treat it as the first thing to check against
++	 * real hardware (dmesg on probe, does it survive CORE_RESET) rather
++	 * than assumed correct.
++	 *
++	 * UNVERIFIED: interrupt trigger type (EDGE_RISING is the datasheet-
++	 * typical default for this chip family, not confirmed for this unit).
++	 *
++	 * NOT WIRED: NFC_CLK_REQ (gpio6 downstream). No equivalent property
++	 * exists in the mainline binding - likely a request line to an
++	 * externally-gated oscillator the mainline driver doesn't model.
++	 * Pinctrl state left in place below in case it turns out to matter.
++	 */
++	nfc@27 {
++		compatible = "samsung,s3fwrn5-i2c";
++		reg = <0x27>;
++		interrupt-parent = <&tlmm>;
++		interrupts = <31 IRQ_TYPE_EDGE_RISING>;
++		en-gpios = <&tlmm 56 GPIO_ACTIVE_HIGH>;
++		wake-gpios = <&tlmm 7 GPIO_ACTIVE_HIGH>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&nfc_irq_default &nfc_clk_req_default>;
++	};
+ };
+ 
+ &i2c3 {
+@@ -1158,6 +1191,18 @@
+ 		bias-disable;
+ 	};
+ 
++	nfc_irq_default: nfc-irq-default-state {
++		pins = "gpio31";
++		function = "gpio";
++		bias-disable;
++	};
++
++	nfc_clk_req_default: nfc-clk-req-default-state {
++		pins = "gpio6";
++		function = "gpio";
++		bias-disable;
++	};
++
+ 	disp_reset_n_active: disp-reset-n-active-state {
+ 		pins = "gpio12";
+ 		function = "gpio";
