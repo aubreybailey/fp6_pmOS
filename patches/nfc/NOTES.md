@@ -1,4 +1,4 @@
-# NFC enablement — draft, not hardware-tested
+# NFC enablement — build-tested, not hardware-tested
 
 Two patches, two different upstream targets:
 
@@ -9,7 +9,47 @@ Two patches, two different upstream targets:
 - `0001-linux-postmarketos-qcom-milos-enable-NFC-S3FWRN5-dri.patch` —
   against pmaports' kernel config fragment
   (`device/testing/linux-postmarketos-qcom-milos/config-postmarketos-qcom-milos.aarch64`).
-  Enables `CONFIG_NFC`, `CONFIG_NFC_S3FWRN5`, `CONFIG_NFC_S3FWRN5_I2C`.
+  Enables `CONFIG_NFC`, `CONFIG_NFC_NCI`, `CONFIG_NFC_S3FWRN5`,
+  `CONFIG_NFC_S3FWRN5_I2C` (all `=m`).
+
+## Build-test results (2026-09-03)
+
+Actually built against the real pinned kernel source
+(`github.com/milos-mainline/linux` tag `v7.2.0-milos`, the exact tarball
+`linux-postmarketos-qcom-milos`'s APKBUILD fetches), inside the Termux
+`proot-distro` Alpine container. Not a paper review — ran the real
+toolchain and caught two real bugs the diff alone didn't show:
+
+- **`CONFIG_NFC=y` is impossible on this defconfig.** `net/nfc/Kconfig`
+  has `depends on RFKILL || !RFKILL`, and this defconfig has `RFKILL=m`
+  elsewhere, which caps NFC at `=m`. `olddefconfig` doesn't error on an
+  impossible value — it silently downgrades it. Only shows up by checking
+  the resulting `.config`, not by reading the patch.
+- **`CONFIG_NFC_S3FWRN5_I2C` depends on `NFC_NCI && I2C`.** `NFC_NCI`
+  wasn't enabled, so the whole option was invisible and got silently
+  dropped, taking `CONFIG_NFC_S3FWRN5` down with it (only reachable via
+  `S3FWRN5_I2C`'s `select`). Fixed by adding `CONFIG_NFC_NCI=m`.
+
+Both are now fixed in the patch. After the fix, `olddefconfig` resolves
+cleanly to exactly the four options intended, no drops, no downgrades.
+
+**Device tree**: compiles clean — `make ARCH=arm64 ... qcom/milos-fairphone-fp6.dtb`
+produces a real `.dtb`, zero warnings or errors. Confirms every phandle
+reference in the patch (`&tlmm`, `&i2c1`, `IRQ_TYPE_EDGE_RISING`,
+`GPIO_ACTIVE_HIGH`, the two new pinctrl states) resolves correctly.
+
+**Driver module compile**: not completed. Hit an unrelated
+`include/generated/asm-offsets.h` generation issue in this from-scratch
+build environment when compiling `drivers/nfc/s3fwrn5/core.c` — that file
+is pre-existing upstream code, untouched by this patch, so this is an
+environment gap to chase separately, not a defect in what we changed here.
+
+**Toolchain note for next time**: this container's default `clang22`
+package can't link the kernel's own Kconfig host tools under Alpine's musl
+(`undefined symbol: __errno`, `__assert2` — looks like an Alpine clang22
+packaging issue, not a kernel bug). Fix: installed `clang21`/`lld21`
+instead and built with `LLVM=-21 LD=ld.lld`. Worth checking if this is
+fixed in a later Alpine clang22 point release before repeating the swap.
 
 ## Where the hardware wiring came from
 
@@ -51,6 +91,6 @@ Secondary unknowns, lower stakes:
 
 ## Status
 
-Drafted 2026-09-03. Not yet build-tested (needs the full kernel
-toolchain), not yet flashed to real hardware, not yet submitted upstream
-anywhere.
+Drafted 2026-09-03, build-tested same day (DTS compile clean, Kconfig
+chain resolves cleanly after fixing the two bugs above). Not yet flashed
+to real hardware, not yet submitted upstream anywhere.
