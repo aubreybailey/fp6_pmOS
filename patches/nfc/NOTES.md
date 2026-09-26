@@ -1,5 +1,43 @@
 # NFC enablement — build-tested, not hardware-tested
 
+## UPDATE 2026-09-26 — the patches below are superseded; the chip is NOT an S3FWRN5
+
+Found via a user-supplied writeup plus the LKML threads (details from
+fetched summaries, so verify against the actual patches before relying on
+any specific value): the FP6 chip is a **Samsung S3NRN4V** — the "rn4v" in
+Fairphone's vendor filenames was the answer, not a hint. Jorijn van der
+Graaf (Catcrafts) has a series in review (v5 as of Aug 2026,
+[thread](https://ratatoskr.run/oe-linux-nfc/2026/08/17399045/t)) adding a
+`samsung,s3nrn4v` variant to the s3fwrn5 driver. Tag *reading* (reader
+mode, ISO 14443-4) works on a Gen 6 with it; card emulation (HCE/SE) does
+not, and payments will never come (bank-provisioned secure element +
+Android/iOS-only wallets). Not merged; maintainers requested changes and
+patch 6 (the FP6 DTS) waits on the binding landing via the qcom tree.
+
+What this means for our drafts:
+- **Our DTS node is wrong as written**: `samsung,s3fwrn5-i2c` won't drive
+  this chip. The S3NRN4V differs: it ships working firmware behind a
+  bootloader protocol the old driver doesn't implement, uses a different
+  RF-calibration command (`DUAL_OPTION`), needs a `FW_CFG` byte at init
+  for the 19.2 MHz reference, and needs its reference clock serviced.
+- **Our hardware sourcing was right**: i2c1@0x27, IRQ gpio31 (rising
+  edge), en gpio56, wake gpio7 all match the upstream series. That
+  validates pulling wiring from Fairphone's GPL devicetree.
+- **What we were missing** (per the series): `pvdd-supply` = PM7550
+  LDO20 (the `vdd_ldo20` we'd noted but never mapped), and a clock,
+  `RPMH_LN_BB_CLK2` from the PMK7635. Our unwired `NFC_CLK_REQ` question
+  is answered: the clock matters. v4 reportedly dropped clock-gating as
+  non-functional — check the final series for what it actually does.
+- The Kconfig fix (NFC=m, NFC_NCI=m dependency) is still valid and
+  needed; the RFKILL cap finding stands.
+
+**Don't send our DTS patch upstream. Test the upstream series instead.**
+Next step is applying Jorijn's driver + binding + DTS patches to
+`v7.2.0-milos` and build-testing those (our toolchain notes in
+`skills/postmarketos-dev/reference/setup.md` apply as-is). Get the series
+from lore/ratatoskr, not from a summary. Our patch files stay here as
+history and as the record of the Kconfig findings.
+
 Two patches, two different upstream targets:
 
 - `0001-arm64-dts-qcom-milos-fairphone-fp6-Add-NFC-node.patch` — against

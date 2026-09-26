@@ -22,26 +22,22 @@ fundamental.
    else, including whether you can `apk add`/`git pull`/report back at
    all without a USB-ethernet/SSH fallback.
 
-2. **NFC** — the actual open item, `patches/nfc/`. The patches there are
-   build-tested clean (DTS compiles, Kconfig resolves, driver source
-   compiles) but never run on hardware. Specific things to check, in
-   order:
-   - `i2cdetect -y 1` (confirm bus number — `i2c1` in the mainline DTS,
-     double check against real hardware) — does *anything* answer at
-     `0x27`? This isolates "chip not wired right" from "chip wired right,
-     wrong driver."
-   - `dmesg | grep -iE "s3fwrn|nfc|i2c"` after boot — does the
-     `samsung,s3fwrn5-i2c` driver even attempt to probe? What's the
-     failure mode if it does and fails (timeout vs. protocol
-     rejection vs. clean bind)?
-   - The real open question from `patches/nfc/NOTES.md`: Fairphone's own
-     vendor driver config references a newer chip generation ("rn4v")
-     than S3FWRN5. If the S3FWRN5 driver doesn't bind, that's the likely
-     reason — check `vendor/samsung_slsi/nfc` (cloneable from
-     `gerrit-public.fairphone.software`, see `patches/nfc/NOTES.md` for
-     the exact path) for what chip family "rn4v" actually corresponds to,
-     and whether a newer mainline driver (there may not be one yet)
-     matches better.
+2. **NFC** — `patches/nfc/`. Read the 2026-09-26 update at the top of
+   `NOTES.md` first: our S3FWRN5-based DTS patch is superseded. The chip
+   is an S3NRN4V, and an upstream series in review (Jorijn van der Graaf,
+   v5 as of Aug 2026) adds driver support; tag reading works with it,
+   card emulation doesn't exist anywhere yet. So the job is now:
+   - Fetch that series from lore/ratatoskr (the real patches, not a
+     summary), apply to `v7.2.0-milos`, build-test (toolchain notes in
+     `skills/postmarketos-dev/reference/setup.md`).
+   - On hardware, sanity check with `i2cdetect -y 1` (anything at
+     `0x27`?) and `dmesg | grep -iE "s3nrn|s3fwrn|nfc|i2c"`, then try an
+     NDEF tag read. Report probe failure modes precisely.
+   - Note the series' DTS uses PM7550 LDO20 for `pvdd-supply` and
+     `RPMH_LN_BB_CLK2` as the clock; check the mapping against this
+     tree's actual regulator/clock labels rather than assuming.
+   - Gen 6 vs Gen 6+: one reviewer reporting NFC dead was on a 6+.
+     This phone is a Gen 6; record which you're testing on.
 
 3. **Re-verify the rest of `docs/status.md` against real hardware**, not
    just kernel source — it's currently a "should work based on config"

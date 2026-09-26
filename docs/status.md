@@ -35,7 +35,12 @@ independently confirmed in a dev log)
 - **NFC**: `CONFIG_NFC` disabled entirely, no device node (just a location
   comment in the DTS). Real hardware confirmed present and functional on
   the Android side (`adb shell dumpsys nfc` shows live firmware data).
-  Draft patch in `../patches/nfc/` — not yet hardware-tested.
+  Draft patch in `../patches/nfc/` — not yet hardware-tested, and
+  **superseded** (2026-09-26): the chip is a Samsung S3NRN4V, not S3FWRN5.
+  Per a secondhand writeup and LKML threads, tag *reading* works on an
+  FP6 with an in-review driver series (not merged; not in our pinned
+  kernel); card emulation (HCE/SE) works nowhere, and tap-to-pay is
+  structurally off the table on Linux. See `../patches/nfc/NOTES.md`.
 
 ## Genuinely unverified (not checked either way)
 
