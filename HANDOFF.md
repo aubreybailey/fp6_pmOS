@@ -13,6 +13,17 @@ that — things documented as "couldn't verify" or "worked around" in the
 skills/patches here were often constrained by that, not by anything
 fundamental.
 
+## Rule zero: search for existing work before starting anything
+
+Before drafting any patch, search lore/netdev/linux-arm-msm (ratatoskr.run
+indexes these), the `milos-mainline/linux` branches, pmaports MRs, and the
+porters' blogs (catcrafts.net, linmob.net weekly updates) for the
+subsystem. The first NFC patch here was drafted without doing this and
+turned out to duplicate — and be worse than — a series already at v5
+upstream. The useful contributions from this repo are more likely to be
+hardware testing (`Tested-by` on a Gen 6), integration of list-only work
+into what pmOS actually ships, and verifying the undocumented areas.
+
 ## Priority order
 
 1. **Confirm basic connectivity first.** Before anything else: does WiFi
@@ -38,6 +49,16 @@ fundamental.
      tree's actual regulator/clock labels rather than assuming.
    - Gen 6 vs Gen 6+: one reviewer reporting NFC dead was on a 6+.
      This phone is a Gen 6; record which you're testing on.
+   - Integration gap (checked 2026-09-26): neither `milos-mainline/linux`
+     (`milos-7.2.y`, `v7.2.0-milos`: FP6 DTS still has only the
+     `/* Samsung NFC @ 0x27 */` comment, no `s3nrn4v` in the driver) nor
+     pmaports `main` (`# CONFIG_NFC is not set`) carries the series. So
+     nobody running pmOS on an FP6 gets tag reading today. Once tested on
+     hardware, the useful output is: a `Tested-by` reply on the series,
+     and an offer to the fork/pmaports maintainer (Luca Weiss) to carry
+     it plus the Kconfig change (`NFC=m`, `NFC_NCI=m`, the driver as `m`;
+     `NFC=y` is impossible here, see `patches/nfc/NOTES.md`) until it
+     lands upstream. Ask them first; they may already have plans.
 
 3. **Re-verify the rest of `docs/status.md` against real hardware**, not
    just kernel source — it's currently a "should work based on config"

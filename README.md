@@ -1,8 +1,11 @@
 # fp6_pmOS
 
-Working notes, patches, and Claude Code skills for developing postmarketOS
-for the Fairphone 6, from directly on the device (Termux + proot Alpine,
-native aarch64 — no cross-compilation needed).
+A working log, environment guide, and Claude Code skills for postmarketOS
+work on the Fairphone 6, done directly on the device (Termux + proot
+Alpine, native aarch64 — no cross-compilation needed). Not a body of
+original patches: the FP6 port is actively developed upstream (Luca
+Weiss, Catcrafts and others), and most useful work here is testing,
+integrating, and documenting against theirs.
 
 **Picking this up fresh (including on a different machine/OS boot, e.g. a
 Claude Code instance running under booted pmOS itself)? Read
