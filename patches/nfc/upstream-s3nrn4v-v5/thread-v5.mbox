@@ -1,0 +1,2148 @@
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-2z4y-a153.jellyfish.systems (out-2z4y-a153.jellyfish.systems [198.54.127.153])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A22CB417BF9
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 11 Aug 2026 22:02:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.54.127.153
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786485730; cv=none; b=pFK3NAjL4iCQlcrSU4lWDHjDhna/d3/qWh6/vpR4KAJGBi84BPiQVfmzcg/CGoSMcOX0ddZbdpiKX28QU3qNcPvi9rrvRk/3RvLp2dooI+ibNdj6n6KlNrB0im8Mpj3Usua6C2Qr97710r9awN738VxsZOdvN/LWGq8+AhNJnsU=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786485730; c=relaxed/simple;
+	bh=rFuMfLFJVq/3ks2toWLWtGVVcTS1sq3q1RxvpflL70g=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=jqJA8qU/7MdyAMl2y+tqFgYg3HGCma9ALFFdUkk/5PHSKz4Pf2gGFHTKj/wmw3belCXyjX7JYWUrmRAPFwAXoK2tZJ/xAwQc2cvhynifzQvOPFb1Tz7P3qT9/OhHaEGLrxf80OoVnsRkrGjBnwwIKM7hzx3HQwG/PBBDO6TMrkY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=198.54.127.153
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKQZN2H6tz8sWP;
+	Tue, 11 Aug 2026 22:01:48 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>,
+	Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: [PATCH v5 1/6] nfc: s3fwrn5: drop of_match_ptr() from the I2C driver
+Date: Wed, 12 Aug 2026 00:01:30 +0200
+Message-ID: <20260811220135.472380-2-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+Since commit 777fd2dab446 ("nfc: Drop __maybe_unused from of_device_id
+tables") the OF match table relies on its MODULE_DEVICE_TABLE()
+reference to count as used, while of_match_ptr() still discards the
+.of_match_table reference on !CONFIG_OF builds. Drop of_match_ptr() so
+every configuration uses the same code; the S3NRN4V support added later
+in this series carries its variant selector in this table's match data.
+
+Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Assisted-by: Claude:claude-fable-5
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+---
+The Reviewed-by was collected on v4; the referenced commit id was
+refreshed for the rebased for-next (same commit).
+
+ drivers/nfc/s3fwrn5/i2c.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/nfc/s3fwrn5/i2c.c b/drivers/nfc/s3fwrn5/i2c.c
+index 4ba762611711..cb73993446e0 100644
+--- a/drivers/nfc/s3fwrn5/i2c.c
++++ b/drivers/nfc/s3fwrn5/i2c.c
+@@ -219,7 +219,7 @@ MODULE_DEVICE_TABLE(of, of_s3fwrn5_i2c_match);
+ static struct i2c_driver s3fwrn5_i2c_driver = {
+ 	.driver = {
+ 		.name = S3FWRN5_I2C_DRIVER_NAME,
+-		.of_match_table = of_match_ptr(of_s3fwrn5_i2c_match),
++		.of_match_table = of_s3fwrn5_i2c_match,
+ 	},
+ 	.probe = s3fwrn5_i2c_probe,
+ 	.remove = s3fwrn5_i2c_remove,
+-- 
+2.55.0
+
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-zbxj-a87.jellyfish.systems (out-zbxj-a87.jellyfish.systems [198.54.127.87])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ABF3847D445
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 11 Aug 2026 22:02:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.54.127.87
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786485730; cv=none; b=VNZ4w1vcv+YUkZlx7vdAGJER+DkE+hP6FI82bB/omUnT1WoGB9rxVJrn29fr2BPmQKrO/sAjds4KVHarAEZ31O3TPg3mmrPS8bmyGcnrklUBKA3t/bG1xV5N1XudfFKQSq1Tlfuff2PVsoAonGBC0leOTi1ZHZ6LlYjctOs7vnw=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786485730; c=relaxed/simple;
+	bh=p+SS7vZxOAXOrGGtNcEayjNQLffbukPNwaC7Z8qdp9A=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=EZhtLlCg9k2sxyJVTghykKhhVWW57tRY+euL8QyDIWAdMSq5Q9joUkJ1AVlS8zIlZU+cJpiAKee96qSKcS9Ssk0eG0PKhsvOPhbKlPErh0uidYChT9hH2SUmLCYLa0GVDs3OBppY6NClIlkU2wxWmwJgfJBAppAVwkG5PXwf+uI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=198.54.127.87
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKQZT269Pz8sWQ;
+	Tue, 11 Aug 2026 22:01:53 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>,
+	Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: [PATCH v5 2/6] nfc: s3fwrn5: use the "s3fwrn5_i2c" string literal directly
+Date: Wed, 12 Aug 2026 00:01:31 +0200
+Message-ID: <20260811220135.472380-3-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+The S3FWRN5_I2C_DRIVER_NAME define is an indirection for a string that
+is fixed ABI (the driver name) and only used within this file. Spell
+the string out at its three users and drop the define.
+
+Suggested-by: David Heidelberg <david@ixit.cz>
+Assisted-by: Claude:claude-fable-5
+Signed-off-by: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+---
+ drivers/nfc/s3fwrn5/i2c.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/nfc/s3fwrn5/i2c.c b/drivers/nfc/s3fwrn5/i2c.c
+index cb73993446e0..c528c085b43e 100644
+--- a/drivers/nfc/s3fwrn5/i2c.c
++++ b/drivers/nfc/s3fwrn5/i2c.c
+@@ -16,8 +16,6 @@
+ 
+ #include "phy_common.h"
+ 
+-#define S3FWRN5_I2C_DRIVER_NAME "s3fwrn5_i2c"
+-
+ struct s3fwrn5_i2c_phy {
+ 	struct phy_common common;
+ 	struct i2c_client *i2c_dev;
+@@ -186,7 +184,7 @@ static int s3fwrn5_i2c_probe(struct i2c_client *client)
+ 
+ 	ret = devm_request_threaded_irq(&client->dev, phy->i2c_dev->irq, NULL,
+ 		s3fwrn5_i2c_irq_thread_fn, IRQF_ONESHOT,
+-		S3FWRN5_I2C_DRIVER_NAME, phy);
++		"s3fwrn5_i2c", phy);
+ 	if (ret)
+ 		goto s3fwrn5_remove;
+ 
+@@ -205,7 +203,7 @@ static void s3fwrn5_i2c_remove(struct i2c_client *client)
+ }
+ 
+ static const struct i2c_device_id s3fwrn5_i2c_id_table[] = {
+-	{ .name = S3FWRN5_I2C_DRIVER_NAME },
++	{ .name = "s3fwrn5_i2c" },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(i2c, s3fwrn5_i2c_id_table);
+@@ -218,7 +216,7 @@ MODULE_DEVICE_TABLE(of, of_s3fwrn5_i2c_match);
+ 
+ static struct i2c_driver s3fwrn5_i2c_driver = {
+ 	.driver = {
+-		.name = S3FWRN5_I2C_DRIVER_NAME,
++		.name = "s3fwrn5_i2c",
+ 		.of_match_table = of_s3fwrn5_i2c_match,
+ 	},
+ 	.probe = s3fwrn5_i2c_probe,
+-- 
+2.55.0
+
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-2z4y-a165.jellyfish.systems (out-2z4y-a165.jellyfish.systems [198.54.127.165])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A61B247799B
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 11 Aug 2026 22:02:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.54.127.165
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786485730; cv=none; b=OS27SzNlDWsH7xaOQsfJK7yk6Oo757HU9NMp/VKcimQ0DRTkC4H5mXm+OEb1tQh9lrvbzvLsKmLf8SvQyGolmhhiXaNX2wWj8iNStpBrxoC1ipcO7DG17WjZAF/4WWvrOw7pTVI5WMs68KPPWVM6FJN2Ub03Yu4yrLXQR8H9yWA=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786485730; c=relaxed/simple;
+	bh=ztvrrkZPCvbDggAczBJt4Z3LvULEpa3mssQRsxLsEG4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=B8AXQxNZq0ybClRemaQyMud4R0hIKkK1GDQgGBm57tv5m8O93BzTZP3qZOmoiRwV8aKwoFEd9REgIMTRsIMLuHHMUqdLanpqQt6NgNKbv4KlYslTVKX+VEhrF/VcpcotzdgBDhkqsJnAq8wrePWeGM8vthzmHTYiewL8I6wK0X8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=198.54.127.165
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKQZJ2Jmcz8sWS;
+	Tue, 11 Aug 2026 22:01:44 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>,
+	Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: [PATCH v5 0/6] nfc: s3fwrn5: support the S3NRN4V variant
+Date: Wed, 12 Aug 2026 00:01:29 +0200
+Message-ID: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+This adds support for the Samsung S3NRN4V, a later part in the Samsung
+NCI NFC controller line the s3fwrn5 driver covers, found e.g. on the
+Fairphone 6 (SM7635).
+
+The S3NRN4V differs from the already-supported parts in three ways:
+it ships with working firmware, and its bootloader reports a hardware
+version the driver has no flash base address for (so the firmware
+download step is skipped); it loads its RF calibration data through
+a different proprietary command (DUAL_OPTION); and its reference
+clock speed is set with the single-byte FW_CFG form the vendor HAL
+uses on this generation.
+
+Patches 1-2 are preparatory cleanups from the v2 review; patch 3 adds
+the compatible to the binding and documents the PVDD supply; patch 4
+makes the driver enable that supply; patch 5 implements the variant;
+patch 6 adds the Fairphone 6 board nodes -- included so the hardware
+can be tested, per David's v2 request; it depends on patch 3 and is
+expected to be picked up via the qcom tree (linux-arm-msm) once the
+binding has landed.
+
+Tested on a Fairphone 6 running a milos-mainline kernel: reader mode
+polls and reads ISO 14443-4 tags reliably, from a fresh boot and
+across driver reloads, with the calibration files present and also
+absent (the chip keeps its stored calibration and still reads). The
+v5 changes were re-verified on the device: tag reads, with the
+version-gate skip taking the restructured exit path. The test kernel
+is v7.1.2-based; its net/nfc differs from this base only in the UART
+transport (nci/uart.c), which this driver does not use.
+
+David, the calibration scheme follows our v2 exchange: fixed
+chip-scoped paths, with a DT table selector deferred until a second
+table set exists. If you'd rather have the selector now
+(samsung,calibration-variant, or the generic firmware-name), say so
+and the next revision will add it.
+
+The two questions we put to Luca in the v2 thread (calibration-table
+variance, linux-firmware submission) are still open; nothing here
+depends on them.
+
+Changes in v5:
+ - Collect Krzysztof's Reviewed-by on patches 1 and 3.
+ - Patch 4: drop the redundant regulator-framework sentence from the
+   commit message and state why the uart phy is not converted
+   (Krzysztof).
+ - Patch 5: restructure the exit labels so failures before the
+   allocation no longer pass through kvfree(), drop the
+   update-announcement print, and log success at dev_dbg() (all
+   Krzysztof).
+ - Rebase onto the nfc tree's current for-next, which was rebased
+   since v4 (the nci parse-hardening and data.c commits v4's cover
+   referenced are no longer in for-next after the rebase); patch 1's
+   referenced commit id updated to the rebased tree (777fd2dab446,
+   was 9739e07fdb29).
+
+Changes in v4 (full list in the lore thread):
+ - Drop clk-req-gpios and the driver's clock-gating machinery (A/B
+   tested as functionless) and reference the buffer the chip is
+   wired to (RPMH_LN_BB_CLK2 -- Luca; verified load-bearing).
+ - New patch 4 consuming the binding's pvdd-supply.
+ - FW_CFG from the ->init hook and the DUAL_OPTION upload
+   version-gated on GET_VER, both matching the vendor stack; board
+   DTS style (Konrad).
+
+v4: https://lore.kernel.org/20260807021001.239389-1-jorijnvdgraaf@catcrafts.net
+v3: https://lore.kernel.org/20260726222405.153008-1-jorijnvdgraaf@catcrafts.net
+v2: https://lore.kernel.org/20260705190621.128257-1-jorijnvdgraaf@catcrafts.net
+v1: https://lore.kernel.org/20260703202601.78563-1-jorijnvdgraaf@catcrafts.net
+
+Jorijn van der Graaf (6):
+  nfc: s3fwrn5: drop of_match_ptr() from the I2C driver
+  nfc: s3fwrn5: use the "s3fwrn5_i2c" string literal directly
+  dt-bindings: net: nfc: samsung,s3fwrn5: add the S3NRN4V
+  nfc: s3fwrn5: enable the PVDD supply
+  nfc: s3fwrn5: support the S3NRN4V variant
+  arm64: dts: qcom: milos-fairphone-fp6: Add NFC
+
+ .../bindings/net/nfc/samsung,s3fwrn5.yaml     |  19 +-
+ .../boot/dts/qcom/milos-fairphone-fp6.dts     |  33 +++-
+ drivers/nfc/s3fwrn5/core.c                    |  34 +++-
+ drivers/nfc/s3fwrn5/i2c.c                     |  26 ++-
+ drivers/nfc/s3fwrn5/nci.c                     | 178 +++++++++++++++++-
+ drivers/nfc/s3fwrn5/nci.h                     |  23 ++-
+ drivers/nfc/s3fwrn5/s3fwrn5.h                 |  14 +-
+ drivers/nfc/s3fwrn5/uart.c                    |   2 +-
+ 8 files changed, 313 insertions(+), 16 deletions(-)
+
+
+base-commit: 9f69d05b5a85c417c73fa2d5c7a2d507ac81cf4b
+-- 
+2.55.0
+
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-zbxj-a67.jellyfish.systems (out-zbxj-a67.jellyfish.systems [198.54.127.67])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70BC13B27CF
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 11 Aug 2026 22:02:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.54.127.67
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786485748; cv=none; b=YPWeKHHnqqOvmowkeiXG8KeJv/xu31INswU/PPP1U3+I/C4OrL1kjgeZXI9puwhhcWO2G0LGyTSPZfxj84pzzDMc6+zNKUiQmR8ouBafrS1qP/6eeKa1aqlZkTyvsfpvdPVuGxM301qHmhHyU+qknvx5j10lpP1fQS9U2aTJl8o=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786485748; c=relaxed/simple;
+	bh=RZ1r8Z+K9GpQX/0AImnOTuCWDkRCkQdG4E9qFSMkjSA=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=ei4/Su7MevMU3d/RwN5KQu6lDu/l/+FdAvQ11LfLCQZ0idPSy93rx++yKdnFFnlLJ1Q/6oPtZoDkLMcuQ98en80jJgmEf+GbZnDZGVvLZ+0lsNhzxoZc8f+aCR21heqLx3s4JukKoxjMcuMB28xDHj8BXXMmluh70rwsw/yOjec=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=198.54.127.67
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKQZZ1xjMz8sWP;
+	Tue, 11 Aug 2026 22:01:58 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>,
+	Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: [PATCH v5 3/6] dt-bindings: net: nfc: samsung,s3fwrn5: add the S3NRN4V
+Date: Wed, 12 Aug 2026 00:01:32 +0200
+Message-ID: <20260811220135.472380-4-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+The S3NRN4V is a later part in the Samsung NCI NFC controller line
+this binding documents, found e.g. on the Fairphone 6 (SM7635). Its
+host interface is NCI over I2C like the S3FWRN5, but it is not
+compatible with any of the existing parts, so no fallback compatible
+applies: its bootloader reports a hardware version none of the
+existing parts use, and its RF configuration is loaded through a
+different proprietary command set.
+
+Also document the PVDD supply, the externally switched rail powering
+the controller (boards feed it from a PMIC LDO). It is required for the
+new device; deployed DTs for the existing parts never described a
+supply, so for those it stays optional.
+
+Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Assisted-by: Claude:claude-opus-4-8
+Assisted-by: Claude:claude-fable-5
+Signed-off-by: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+---
+Conor's Acked-by, given on v2 and carried into v3, is dropped: v4
+removed clk-req-gpios (and its dependencies clause) and the S3NRN4V
+example. The compatible and pvdd-supply hunks are unchanged
+from the acked text.
+
+ .../bindings/net/nfc/samsung,s3fwrn5.yaml     | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/net/nfc/samsung,s3fwrn5.yaml b/Documentation/devicetree/bindings/net/nfc/samsung,s3fwrn5.yaml
+index 12baee45752c..40a69466802b 100644
+--- a/Documentation/devicetree/bindings/net/nfc/samsung,s3fwrn5.yaml
++++ b/Documentation/devicetree/bindings/net/nfc/samsung,s3fwrn5.yaml
+@@ -14,6 +14,7 @@ properties:
+     enum:
+       - samsung,s3fwrn5-i2c
+       - samsung,s3fwrn82
++      - samsung,s3nrn4v
+ 
+   en-gpios:
+     maxItems: 1
+@@ -29,6 +30,9 @@ properties:
+   clocks:
+     maxItems: 1
+ 
++  pvdd-supply:
++    description: PVDD power supply
++
+   wake-gpios:
+     maxItems: 1
+     description:
+@@ -58,12 +62,25 @@ allOf:
+       properties:
+         compatible:
+           contains:
+-            const: samsung,s3fwrn5-i2c
++            enum:
++              - samsung,s3fwrn5-i2c
++              - samsung,s3nrn4v
+     then:
+       required:
+         - interrupts
+         - reg
+ 
++  # Deployed DTs for the older parts never described a supply, so PVDD is
++  # only required for the new device.
++  - if:
++      properties:
++        compatible:
++          contains:
++            const: samsung,s3nrn4v
++    then:
++      required:
++        - pvdd-supply
++
+ examples:
+   - |
+     #include <dt-bindings/gpio/gpio.h>
+-- 
+2.55.0
+
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-2z4y-a128.jellyfish.systems (out-2z4y-a128.jellyfish.systems [198.54.127.128])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C34B447DF8E
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 11 Aug 2026 22:02:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.54.127.128
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786485754; cv=none; b=JOQnZifAVw8bR+CfGQ4tJW6QXYOwCWmRizICi/0J/JEujwf0ObdR2Gx9yBSdFdW7OSgBDOl6GueuvelGCS+vzqojMuTY1yRfIQ/KhUxKBeI0JkRTgGEfJMIpMBdTxcImPwwNmSlx6qM8JR3AVHD0Eb6qqBhkWwH+6iszYLov1aY=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786485754; c=relaxed/simple;
+	bh=Z3+PNZbexYEBGfPD5sFnQ1ueFQ5UZLxOTsSqCW/A9k0=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=uePZDRzE+k2PXm/lfF0d3WjfuK5mUMMBFAyTWztFUuSvHvuvXtbHzCgwiiwz+lBPW2lqvTYiCqCZcJaKTiS5M2Y+066O1t+4rJjhsCPbrPF8EkkGo0LG+Qi1hmkofWIfsXpLsOpurLcD28cC0mFjN/r8opfuwWQd+fW5PIKMs0w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=198.54.127.128
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKQZg1s6Xz8sWQ;
+	Tue, 11 Aug 2026 22:02:03 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>,
+	Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: [PATCH v5 4/6] nfc: s3fwrn5: enable the PVDD supply
+Date: Wed, 12 Aug 2026 00:01:33 +0200
+Message-ID: <20260811220135.472380-5-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+The controller is powered by an externally switched PVDD rail. Get and
+enable it in the i2c phy probe, before any of the chip's pins is driven
+or its clock started, so the chip's power does not depend on whatever
+state the bootloader or platform left the rail in.
+
+The uart phy (s3fwrn82) is unchanged: the PVDD pin exists on that part
+too, but no in-tree DT describes an s3fwrn82, so an enable there would
+power nothing and could not be tested. It can follow with the first
+board that describes the rail.
+
+Assisted-by: Claude:claude-fable-5
+Signed-off-by: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+---
+ drivers/nfc/s3fwrn5/i2c.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/nfc/s3fwrn5/i2c.c b/drivers/nfc/s3fwrn5/i2c.c
+index c528c085b43e..f93d8b47b65e 100644
+--- a/drivers/nfc/s3fwrn5/i2c.c
++++ b/drivers/nfc/s3fwrn5/i2c.c
+@@ -11,6 +11,7 @@
+ #include <linux/gpio/consumer.h>
+ #include <linux/delay.h>
+ #include <linux/module.h>
++#include <linux/regulator/consumer.h>
+ 
+ #include <net/nfc/nfc.h>
+ 
+@@ -158,6 +159,11 @@ static int s3fwrn5_i2c_probe(struct i2c_client *client)
+ 	phy->i2c_dev = client;
+ 	i2c_set_clientdata(client, phy);
+ 
++	ret = devm_regulator_get_enable(&client->dev, "pvdd");
++	if (ret)
++		return dev_err_probe(&client->dev, ret,
++				     "failed to enable pvdd\n");
++
+ 	phy->common.gpio_en = devm_gpiod_get(&client->dev, "en", GPIOD_OUT_HIGH);
+ 	if (IS_ERR(phy->common.gpio_en))
+ 		return PTR_ERR(phy->common.gpio_en);
+-- 
+2.55.0
+
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-93wp-a42.jellyfish.systems (out-93wp-a42.jellyfish.systems [104.207.68.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDC8747DD63
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 11 Aug 2026 22:02:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=104.207.68.42
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786485755; cv=none; b=i9dXJISSeVcwoqF2UuZ+im9zQ/u6KMwql2TXYuHZopIwZZgh2c6HaBJEwjr3F0xYSm90lhMwa73CkkWEje7I/h4eCkei0Kywmp9gi64GrUfEHZCa1tLZtjyobo2WxpQeyF4rHYgk/ZTYPu9NI+OucS5Sm93NriblvACiqi39X/M=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786485755; c=relaxed/simple;
+	bh=hpay0Z4iP5WI8jafOAYJU7/3eg/US0fygLBZi8IsOVI=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=HHEaUkZXpqbsKNTAs3uwrfB1y2f1TpD1DT7G8KdY7PF2hfg96ebR/zAHRhKR7FLRaDfKJaLP/O81R9WBfbhhJaY+kw4EnzL3e0pFuga0hpFTXUks+2nZIfl/eZBFc5vDKEGkpB3+1oVFwWHL8dJpLTPPx/hrbM8uCmMCFYJk/7o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=104.207.68.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKQZs1gMPz8sWQ;
+	Tue, 11 Aug 2026 22:02:13 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>,
+	Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: [PATCH v5 6/6] arm64: dts: qcom: milos-fairphone-fp6: Add NFC
+Date: Wed, 12 Aug 2026 00:01:35 +0200
+Message-ID: <20260811220135.472380-7-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+Add the Samsung S3NRN4V NCI NFC controller on i2c1. Its XI clock comes
+from the PMK7635 CLK7_LN buffer (RPMH_LN_BB_CLK2), and the reference is
+load-bearing: with no clocks reference at all the chip polls but never
+activates a tag, while a held rpmh clock vote lets it read (verified on
+hardware).
+
+PVDD is fed from PM7550 LDO20, the rail the downstream driver switches
+for this chip.
+
+The enable line is routed to the chip's power-down input. The driver
+drives its "en" descriptor to logical 1 to hold the chip powered down,
+and on this board the chip is off while the pin is physically high, so
+the line is GPIO_ACTIVE_HIGH. The pin is pulled up so the chip stays
+off while the line is not driven.
+
+Assisted-by: Claude:claude-opus-4-8
+Assisted-by: Claude:claude-fable-5
+Signed-off-by: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+---
+ .../boot/dts/qcom/milos-fairphone-fp6.dts     | 33 +++++++++++++++++--
+ 1 file changed, 31 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts b/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts
+index ebdca0e2d2f3..bdba848275db 100644
+--- a/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts
++++ b/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts
+@@ -601,9 +601,22 @@ &gcc {
+ };
+ 
+ &i2c1 {
+-	/* Samsung NFC @ 0x27 */
+-
+ 	status = "okay";
++
++	nfc@27 {
++		compatible = "samsung,s3nrn4v";
++		reg = <0x27>;
++
++		interrupts-extended = <&tlmm 31 IRQ_TYPE_EDGE_RISING>;
++		en-gpios = <&tlmm 56 GPIO_ACTIVE_HIGH>;
++		wake-gpios = <&tlmm 7 GPIO_ACTIVE_HIGH>;
++		clocks = <&rpmhcc RPMH_LN_BB_CLK2>;
++
++		pvdd-supply = <&vreg_l20b>;
++
++		pinctrl-0 = <&nfc_default>;
++		pinctrl-names = "default";
++	};
+ };
+ 
+ &i2c3 {
+@@ -825,6 +838,22 @@ &tlmm {
+ 			       <13 1>, /* NC */
+ 			       <63 2>; /* WLAN UART */
+ 
++	nfc_default: nfc-default-state {
++		irq-pins {
++			pins = "gpio31";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++
++		pd-pins {
++			pins = "gpio56";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-pull-up;
++		};
++	};
++
+ 	sdc2_card_det_n: sdc2-card-det-state {
+ 		pins = "gpio65";
+ 		function = "gpio";
+-- 
+2.55.0
+
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-93wp-a39.jellyfish.systems (out-93wp-a39.jellyfish.systems [104.207.68.39])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7897747D95E
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 11 Aug 2026 22:15:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=104.207.68.39
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786486504; cv=none; b=Bsumn/RK2P0K9HnRU9+poixKJa25yUMsG3qLtmNuqNXmkXPpM9oaZ44ov9SyKVU/blqOLHiTqnAYOPhCuGYv1eY5rPgFrC4xQMGwdTGlgvawG1PymGaAXH7Q+96kPvkHMbLnzQ0NlGCiWKMfKGrlYF6rHeZ/crrJqJP8jlbtC/U=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786486504; c=relaxed/simple;
+	bh=bXvDILfglqE129GRsc04eHikIhj4UMPFBr2G6TX/DN0=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=si7596ozo72SdEr+67RjfgXwAj5brX2WVFD/mFbWmjrxHooqJ6W9EEnvr2wGYePfuHkyIxCZ9xE+I33beRBdKkfxV7YmdMKrQEzUYPe2VvrXavtUZTSYoDZPydY5rsLJ8jpDW1tyg9fegA4GDtBrXQ705UtbSINgNzXeoErtB+c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=104.207.68.39
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKQZm1k6xz8sWP;
+	Tue, 11 Aug 2026 22:02:08 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>,
+	Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: [PATCH v5 5/6] nfc: s3fwrn5: support the S3NRN4V variant
+Date: Wed, 12 Aug 2026 00:01:34 +0200
+Message-ID: <20260811220135.472380-6-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+The S3NRN4V (e.g. on the Fairphone 6, SM7635) is a later part in the
+Samsung NFC controller line this driver covers. It needs different
+bring-up, selected with a new samsung,s3nrn4v compatible:
+
+ - It ships with working firmware, and its bootloader reports a
+   hardware version this driver has no flash base address for, so the
+   firmware download step is skipped. Its RF calibration data is
+   loaded with the proprietary DUAL_OPTION command (the HW and SW
+   blobs merged into a single stream) instead of the
+   START/SET/STOP_RFREG sequence. The upload is version-gated on
+   DUAL_OPTION GET_VER, matching the vendor stack: GET_VER reports
+   the chip's current calibration versions, and the push is skipped
+   when both match the blobs (each blob carries its version in its
+   last 16 bytes). post_setup runs on every device-up, so the
+   gate is what keeps the chip's calibration store from being rewritten
+   each time NFC is enabled.
+
+ - Its reference clock speed is configured with the single-byte FW_CFG
+   form, sent from the ->init hook, before CORE_RESET, in the same
+   order the vendor stack sends it. The vendor HAL uses the
+   single-byte form for this generation, and its vendor configuration
+   sets the selector to 0x11, which selects the 19.2 MHz reference.
+   Without this command the chip completes NCI initialization but
+   goes silent on RF_DISCOVER -- the command times out unanswered and
+   polling never starts (verified on hardware).
+
+The calibration data is requested from a chip-scoped directory,
+samsung/s3nrn4v/hwreg.bin and samsung/s3nrn4v/swreg.bin, rather than
+the flat sec_s3fwrn5_rfreg.bin name the older parts use.
+
+The variant is carried as match data by both the OF and the I2C device
+id tables so the two match paths agree.
+
+Existing S3FWRN5 / S3FWRN82 setups keep the firmware-download path and
+the legacy rfreg sequence, unchanged.
+
+Assisted-by: Claude:claude-opus-4-8
+Assisted-by: Claude:claude-fable-5
+Assisted-by: Claude:claude-opus-5
+Signed-off-by: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+---
+The upload deliberately does not share a helper with
+s3fwrn5_nci_rf_configure(): the framing differs (sub-OID prefix
+byte, one merged stream vs per-file sections) and the error policy
+differs (abort STOP on a failed section), so a common helper would
+carry more branches than it saves.
+
+FW_CFG is sent from ->init rather than from within
+s3fwrn5_nci_rf_configure_dual() so the clock configuration still runs
+when the calibration files are absent (the upload path returns early
+there; the reference clock must not depend on it).
+
+ drivers/nfc/s3fwrn5/core.c    |  34 ++++++-
+ drivers/nfc/s3fwrn5/i2c.c     |  12 ++-
+ drivers/nfc/s3fwrn5/nci.c     | 178 +++++++++++++++++++++++++++++++++-
+ drivers/nfc/s3fwrn5/nci.h     |  23 ++++-
+ drivers/nfc/s3fwrn5/s3fwrn5.h |  14 ++-
+ drivers/nfc/s3fwrn5/uart.c    |   2 +-
+ 6 files changed, 255 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/nfc/s3fwrn5/core.c b/drivers/nfc/s3fwrn5/core.c
+index af0fa8bd970b..563470cb928d 100644
+--- a/drivers/nfc/s3fwrn5/core.c
++++ b/drivers/nfc/s3fwrn5/core.c
+@@ -20,6 +20,9 @@
+ 				NFC_PROTO_ISO14443_B_MASK | \
+ 				NFC_PROTO_ISO15693_MASK)
+ 
++#define S3NRN4V_HWREG_NAME	"samsung/s3nrn4v/hwreg.bin"
++#define S3NRN4V_SWREG_NAME	"samsung/s3nrn4v/swreg.bin"
++
+ static int s3fwrn5_firmware_init(struct s3fwrn5_info *info)
+ {
+ 	struct s3fwrn5_fw_info *fw_info = &info->fw_info;
+@@ -74,6 +77,22 @@ static int s3fwrn5_firmware_update(struct s3fwrn5_info *info)
+ 	return ret;
+ }
+ 
++static int s3fwrn5_nci_init(struct nci_dev *ndev)
++{
++	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
++	int ret = 0;
++
++	if (info->variant == S3FWRN5_VARIANT_S3NRN4V) {
++		ret = s3fwrn5_nci_clk_cfg(info);
++		if (ret < 0)
++			dev_err(&ndev->nfc_dev->dev,
++				"failed to configure the reference clock: %d\n",
++				ret);
++	}
++
++	return ret;
++}
++
+ static int s3fwrn5_nci_open(struct nci_dev *ndev)
+ {
+ 	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
+@@ -127,6 +146,15 @@ static int s3fwrn5_nci_post_setup(struct nci_dev *ndev)
+ 	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
+ 	int ret;
+ 
++	if (info->variant == S3FWRN5_VARIANT_S3NRN4V) {
++		ret = s3fwrn5_nci_rf_configure_dual(info, S3NRN4V_HWREG_NAME,
++						    S3NRN4V_SWREG_NAME);
++		if (ret < 0)
++			dev_warn(&ndev->nfc_dev->dev,
++				 "RF calibration data update failed: %d\n", ret);
++		return 0;
++	}
++
+ 	if (s3fwrn5_firmware_init(info)) {
+ 		//skip bootloader mode
+ 		return 0;
+@@ -149,6 +177,7 @@ static int s3fwrn5_nci_post_setup(struct nci_dev *ndev)
+ }
+ 
+ static const struct nci_ops s3fwrn5_nci_ops = {
++	.init = s3fwrn5_nci_init,
+ 	.open = s3fwrn5_nci_open,
+ 	.close = s3fwrn5_nci_close,
+ 	.send = s3fwrn5_nci_send,
+@@ -158,7 +187,7 @@ static const struct nci_ops s3fwrn5_nci_ops = {
+ };
+ 
+ int s3fwrn5_probe(struct nci_dev **ndev, void *phy_id, struct device *pdev,
+-	const struct s3fwrn5_phy_ops *phy_ops)
++	const struct s3fwrn5_phy_ops *phy_ops, enum s3fwrn5_variant variant)
+ {
+ 	struct s3fwrn5_info *info;
+ 	int ret;
+@@ -170,6 +199,7 @@ int s3fwrn5_probe(struct nci_dev **ndev, void *phy_id, struct device *pdev,
+ 	info->phy_id = phy_id;
+ 	info->pdev = pdev;
+ 	info->phy_ops = phy_ops;
++	info->variant = variant;
+ 	mutex_init(&info->mutex);
+ 
+ 	s3fwrn5_set_mode(info, S3FWRN5_MODE_COLD);
+@@ -225,3 +255,5 @@ EXPORT_SYMBOL(s3fwrn5_recv_frame);
+ MODULE_LICENSE("GPL");
+ MODULE_DESCRIPTION("Samsung S3FWRN5 NFC driver");
+ MODULE_AUTHOR("Robert Baldyga <r.baldyga@samsung.com>");
++MODULE_FIRMWARE(S3NRN4V_HWREG_NAME);
++MODULE_FIRMWARE(S3NRN4V_SWREG_NAME);
+diff --git a/drivers/nfc/s3fwrn5/i2c.c b/drivers/nfc/s3fwrn5/i2c.c
+index f93d8b47b65e..884420ac83b5 100644
+--- a/drivers/nfc/s3fwrn5/i2c.c
++++ b/drivers/nfc/s3fwrn5/i2c.c
+@@ -145,6 +145,7 @@ static irqreturn_t s3fwrn5_i2c_irq_thread_fn(int irq, void *phy_id)
+ 
+ static int s3fwrn5_i2c_probe(struct i2c_client *client)
+ {
++	enum s3fwrn5_variant variant;
+ 	struct s3fwrn5_i2c_phy *phy;
+ 	int ret;
+ 
+@@ -183,8 +184,9 @@ static int s3fwrn5_i2c_probe(struct i2c_client *client)
+ 		return dev_err_probe(&client->dev, PTR_ERR(phy->clk),
+ 				     "failed to get clock\n");
+ 
++	variant = (uintptr_t)i2c_get_match_data(client);
+ 	ret = s3fwrn5_probe(&phy->common.ndev, phy, &phy->i2c_dev->dev,
+-			    &i2c_phy_ops);
++			    &i2c_phy_ops, variant);
+ 	if (ret < 0)
+ 		return ret;
+ 
+@@ -209,13 +211,17 @@ static void s3fwrn5_i2c_remove(struct i2c_client *client)
+ }
+ 
+ static const struct i2c_device_id s3fwrn5_i2c_id_table[] = {
+-	{ .name = "s3fwrn5_i2c" },
++	{ .name = "s3fwrn5_i2c", .driver_data = S3FWRN5_VARIANT_FWDL },
++	{ .name = "s3nrn4v", .driver_data = S3FWRN5_VARIANT_S3NRN4V },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(i2c, s3fwrn5_i2c_id_table);
+ 
+ static const struct of_device_id of_s3fwrn5_i2c_match[] = {
+-	{ .compatible = "samsung,s3fwrn5-i2c" },
++	{ .compatible = "samsung,s3fwrn5-i2c",
++	  .data = (void *)S3FWRN5_VARIANT_FWDL },
++	{ .compatible = "samsung,s3nrn4v",
++	  .data = (void *)S3FWRN5_VARIANT_S3NRN4V },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(of, of_s3fwrn5_i2c_match);
+diff --git a/drivers/nfc/s3fwrn5/nci.c b/drivers/nfc/s3fwrn5/nci.c
+index 5a9de11bbece..381aa7bf29a2 100644
+--- a/drivers/nfc/s3fwrn5/nci.c
++++ b/drivers/nfc/s3fwrn5/nci.c
+@@ -8,6 +8,9 @@
+ 
+ #include <linux/completion.h>
+ #include <linux/firmware.h>
++#include <linux/minmax.h>
++#include <linux/slab.h>
++#include <linux/unaligned.h>
+ 
+ #include "s3fwrn5.h"
+ #include "nci.h"
+@@ -20,7 +23,24 @@ static int s3fwrn5_nci_prop_rsp(struct nci_dev *ndev, struct sk_buff *skb)
+ 	return 0;
+ }
+ 
+-const struct nci_driver_ops s3fwrn5_nci_prop_ops[4] = {
++/*
++ * DUAL_OPTION responses are not uniform: GET_VER answers with the chip's
++ * calibration versions instead of a status byte, so stash the payload for
++ * the caller before completing the request.
++ */
++static int s3fwrn5_nci_dual_rsp(struct nci_dev *ndev, struct sk_buff *skb)
++{
++	struct s3fwrn5_info *info = nci_get_drvdata(ndev);
++
++	info->dual_rsp_len = min_t(unsigned int, skb->len,
++				   sizeof(info->dual_rsp));
++	memcpy(info->dual_rsp, skb->data, info->dual_rsp_len);
++
++	nci_req_complete(ndev, skb->data[0]);
++	return 0;
++}
++
++const struct nci_driver_ops s3fwrn5_nci_prop_ops[5] = {
+ 	{
+ 		.opcode = nci_opcode_pack(NCI_GID_PROPRIETARY,
+ 				NCI_PROP_SET_RFREG),
+@@ -41,6 +61,11 @@ const struct nci_driver_ops s3fwrn5_nci_prop_ops[4] = {
+ 				NCI_PROP_FW_CFG),
+ 		.rsp = s3fwrn5_nci_prop_rsp,
+ 	},
++	{
++		.opcode = nci_opcode_pack(NCI_GID_PROPRIETARY,
++				NCI_PROP_DUAL_OPTION),
++		.rsp = s3fwrn5_nci_dual_rsp,
++	},
+ };
+ 
+ #define S3FWRN5_RFREG_SECTION_SIZE 252
+@@ -117,3 +142,154 @@ int s3fwrn5_nci_rf_configure(struct s3fwrn5_info *info, const char *fw_name)
+ 	release_firmware(fw);
+ 	return ret;
+ }
++
++/*
++ * The S3NRN4V expects the single-byte FW_CFG form (just the clock-speed
++ * selector).
++ */
++int s3fwrn5_nci_clk_cfg(struct s3fwrn5_info *info)
++{
++	u8 clk_speed = NCI_PROP_FW_CFG_CLK_SPEED;
++
++	return nci_prop_cmd(info->ndev, NCI_PROP_FW_CFG, 1, &clk_speed);
++}
++
++/*
++ * An 8-byte calibration version: 5 bytes of date stamp and a 3-byte CSC
++ * code, at fixed offsets both in a blob's 16-byte tail and in each half of
++ * the GET_VER response (HW at offset 0, SW at offset 15).
++ */
++static bool s3fwrn5_nci_dual_version_eq(const u8 *a, const u8 *b)
++{
++	return !memcmp(a + 5, b + 5, 5) && !memcmp(a + 12, b + 12, 3);
++}
++
++static bool s3fwrn5_nci_dual_cal_current(struct s3fwrn5_info *info,
++					 const struct firmware *hw_fw,
++					 const struct firmware *sw_fw)
++{
++	if (info->dual_rsp_len < 30)
++		return false;
++	if (hw_fw->size < 16 || sw_fw->size < 16)
++		return false;
++
++	return s3fwrn5_nci_dual_version_eq(info->dual_rsp,
++					   hw_fw->data + hw_fw->size - 16) &&
++	       s3fwrn5_nci_dual_version_eq(info->dual_rsp + 15,
++					   sw_fw->data + sw_fw->size - 16);
++}
++
++/*
++ * S3NRN4V RF calibration data update: the HW and SW blobs merged into one
++ * stream (HW first), pushed as START_UPDATE, one SET_OPTION per 252-byte
++ * section, then STOP_UPDATE carrying a 16-bit checksum (running sum of the
++ * merged stream as 32-bit words).
++ */
++int s3fwrn5_nci_rf_configure_dual(struct s3fwrn5_info *info,
++				  const char *hw_name, const char *sw_name)
++{
++	struct nci_prop_dual_set_option_cmd set_option;
++	struct device *dev = &info->ndev->nfc_dev->dev;
++	const struct firmware *hw_fw, *sw_fw;
++	size_t merged_size, i, len;
++	u8 *merged;
++	u8 stop_cmd[3];
++	u32 checksum;
++	u8 sub_oid;
++	int ret;
++
++	ret = firmware_request_nowarn(&hw_fw, hw_name, dev);
++	if (ret < 0)
++		return ret;
++	ret = firmware_request_nowarn(&sw_fw, sw_name, dev);
++	if (ret < 0)
++		goto out_hw;
++
++	merged_size = hw_fw->size + sw_fw->size;
++
++	/*
++	 * The stream is checksummed as 32-bit words and pushed in at most 256
++	 * sections (the section index is a single byte); reject blobs that
++	 * would silently break either.
++	 */
++	if (!merged_size || merged_size % 4 ||
++	    merged_size > 256 * NCI_PROP_DUAL_SECTION_SIZE) {
++		dev_err(dev, "invalid calibration data size: %zu\n", merged_size);
++		ret = -EINVAL;
++		goto out_sw;
++	}
++
++	/*
++	 * Ask the chip for its current calibration versions and skip the
++	 * upload when both already match the blobs; a mismatch or an
++	 * unparseable answer means the upload proceeds. GET_VER answers with
++	 * versions, not a status byte, so nci_prop_cmd()'s return carries no
++	 * meaning here.
++	 */
++	sub_oid = NCI_PROP_DUAL_SUB_GET_VER;
++	info->dual_rsp_len = 0;
++	nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION, 1, &sub_oid);
++	if (s3fwrn5_nci_dual_cal_current(info, hw_fw, sw_fw)) {
++		dev_dbg(dev, "calibration data already current\n");
++		ret = 0;
++		goto out_sw;
++	}
++
++	merged = kvmalloc(merged_size, GFP_KERNEL);
++	if (!merged) {
++		ret = -ENOMEM;
++		goto out_sw;
++	}
++	memcpy(merged, hw_fw->data, hw_fw->size);
++	memcpy(merged + hw_fw->size, sw_fw->data, sw_fw->size);
++
++	checksum = 0;
++	for (i = 0; i + 4 <= merged_size; i += 4)
++		checksum += get_unaligned_le32(merged + i);
++
++	/* START_UPDATE */
++	sub_oid = NCI_PROP_DUAL_SUB_START_UPDATE;
++	ret = nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION, 1, &sub_oid);
++	if (ret < 0) {
++		dev_err(dev, "Unable to start calibration data update\n");
++		goto out;
++	}
++
++	/* SET_OPTION per section */
++	set_option.sub_oid = NCI_PROP_DUAL_SUB_SET_OPTION;
++	set_option.index = 0;
++	for (i = 0; i < merged_size; i += NCI_PROP_DUAL_SECTION_SIZE) {
++		len = min_t(size_t, merged_size - i, NCI_PROP_DUAL_SECTION_SIZE);
++		memcpy(set_option.data, merged + i, len);
++		ret = nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION,
++				   len + 2, (__u8 *)&set_option);
++		if (ret < 0) {
++			dev_err(dev, "calibration data update error: %d\n",
++				ret);
++			/* Abort form: STOP_UPDATE with the sub-OID alone. */
++			sub_oid = NCI_PROP_DUAL_SUB_STOP_UPDATE;
++			nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION, 1,
++				     &sub_oid);
++			goto out;
++		}
++		set_option.index++;
++	}
++
++	/* STOP_UPDATE with checksum */
++	stop_cmd[0] = NCI_PROP_DUAL_SUB_STOP_UPDATE;
++	put_unaligned_le16(checksum, &stop_cmd[1]);
++	ret = nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION, 3, stop_cmd);
++	if (ret < 0) {
++		dev_err(dev, "Unable to stop calibration data update\n");
++		goto out;
++	}
++
++	dev_dbg(dev, "calibration data update: success\n");
++out:
++	kvfree(merged);
++out_sw:
++	release_firmware(sw_fw);
++out_hw:
++	release_firmware(hw_fw);
++	return ret;
++}
+diff --git a/drivers/nfc/s3fwrn5/nci.h b/drivers/nfc/s3fwrn5/nci.h
+index bc4bce2bbc4d..453a1c9d65eb 100644
+--- a/drivers/nfc/s3fwrn5/nci.h
++++ b/drivers/nfc/s3fwrn5/nci.h
+@@ -40,6 +40,9 @@ struct nci_prop_stop_rfreg_rsp {
+ 
+ #define NCI_PROP_FW_CFG		0x28
+ 
++/* S3NRN4V single-byte FW_CFG payload; 0x11 selects the 19.2 MHz reference. */
++#define NCI_PROP_FW_CFG_CLK_SPEED	0x11
++
+ struct nci_prop_fw_cfg_cmd {
+ 	__u8 clk_type;
+ 	__u8 clk_speed;
+@@ -50,7 +53,25 @@ struct nci_prop_fw_cfg_rsp {
+ 	__u8 status;
+ };
+ 
+-extern const struct nci_driver_ops s3fwrn5_nci_prop_ops[4];
++#define NCI_PROP_DUAL_OPTION		0x2a
++
++#define NCI_PROP_DUAL_SUB_GET_VER	0x00
++#define NCI_PROP_DUAL_SUB_START_UPDATE	0x01
++#define NCI_PROP_DUAL_SUB_SET_OPTION	0x02
++#define NCI_PROP_DUAL_SUB_STOP_UPDATE	0x03
++
++#define NCI_PROP_DUAL_SECTION_SIZE	252
++
++struct nci_prop_dual_set_option_cmd {
++	__u8 sub_oid;
++	__u8 index;
++	__u8 data[NCI_PROP_DUAL_SECTION_SIZE];
++};
++
++extern const struct nci_driver_ops s3fwrn5_nci_prop_ops[5];
+ int s3fwrn5_nci_rf_configure(struct s3fwrn5_info *info, const char *fw_name);
++int s3fwrn5_nci_rf_configure_dual(struct s3fwrn5_info *info,
++				  const char *hw_name, const char *sw_name);
++int s3fwrn5_nci_clk_cfg(struct s3fwrn5_info *info);
+ 
+ #endif /* __LOCAL_S3FWRN5_NCI_H_ */
+diff --git a/drivers/nfc/s3fwrn5/s3fwrn5.h b/drivers/nfc/s3fwrn5/s3fwrn5.h
+index 2b492236090b..63f679f17166 100644
+--- a/drivers/nfc/s3fwrn5/s3fwrn5.h
++++ b/drivers/nfc/s3fwrn5/s3fwrn5.h
+@@ -21,6 +21,13 @@ enum s3fwrn5_mode {
+ 	S3FWRN5_MODE_FW,
+ };
+ 
++enum s3fwrn5_variant {
++	/* S3FWRN5 / S3FWRN82: firmware is downloaded by this driver */
++	S3FWRN5_VARIANT_FWDL,
++	/* S3NRN4V: no firmware download; FW_CFG + DUAL_OPTION bring-up */
++	S3FWRN5_VARIANT_S3NRN4V,
++};
++
+ struct s3fwrn5_phy_ops {
+ 	void (*set_wake)(void *id, bool sleep);
+ 	void (*set_mode)(void *id, enum s3fwrn5_mode);
+@@ -36,6 +43,11 @@ struct s3fwrn5_info {
+ 	const struct s3fwrn5_phy_ops *phy_ops;
+ 
+ 	struct s3fwrn5_fw_info fw_info;
++	enum s3fwrn5_variant variant;
++
++	/* Last DUAL_OPTION response payload (GET_VER carries versions). */
++	u8 dual_rsp[32];
++	u8 dual_rsp_len;
+ 
+ 	struct mutex mutex;
+ };
+@@ -78,7 +90,7 @@ static inline int s3fwrn5_write(struct s3fwrn5_info *info, struct sk_buff *skb)
+ }
+ 
+ int s3fwrn5_probe(struct nci_dev **ndev, void *phy_id, struct device *pdev,
+-	const struct s3fwrn5_phy_ops *phy_ops);
++	const struct s3fwrn5_phy_ops *phy_ops, enum s3fwrn5_variant variant);
+ void s3fwrn5_remove(struct nci_dev *ndev);
+ 
+ int s3fwrn5_recv_frame(struct nci_dev *ndev, struct sk_buff *skb,
+diff --git a/drivers/nfc/s3fwrn5/uart.c b/drivers/nfc/s3fwrn5/uart.c
+index 8f142a255101..75397c3dbc58 100644
+--- a/drivers/nfc/s3fwrn5/uart.c
++++ b/drivers/nfc/s3fwrn5/uart.c
+@@ -136,7 +136,7 @@ static int s3fwrn82_uart_probe(struct serdev_device *serdev)
+ 	}
+ 
+ 	ret = s3fwrn5_probe(&phy->common.ndev, phy, &phy->ser_dev->dev,
+-			    &uart_phy_ops);
++			    &uart_phy_ops, S3FWRN5_VARIANT_FWDL);
+ 	if (ret < 0)
+ 		goto err_serdev;
+ 
+-- 
+2.55.0
+
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from ixit.cz (ixit.cz [84.42.129.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC72F436BE6
+	for <oe-linux-nfc@lists.linux.dev>; Wed, 12 Aug 2026 11:18:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=84.42.129.46
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786533530; cv=none; b=FnnWjsDQBtB+zUkSAhHKOyHWuP0hkbIjRCEp/a3hcOw1XMP+ViuTvcUjj99PSO3VHpVp0wYg2/VeExc4Y8yv1+UWwp8dccpzvKhrivhSXjb5adFBMvznu/96fRjRCsaiB6hvQXeU/XucA5cFXQhZ6NBwN+S4+yFLhY/xWg2w+6w=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786533530; c=relaxed/simple;
+	bh=/qWUVu4Bp+xrCFfV5lDFh1FyW63H3CQSlJmq+9G4ii8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=m9qib8dtftm5054WxzWjeCCUKFm0umGsloDEHP+4MH+V/8W4kHVWPOK40m5zpgkZSvqdqM5SKx/Rv1XRmyv9CCRetm3tK4sP1H4bDvHgvzBFdic0lhSY4SlmC8Zw8E7GK74VauoqKwEnpdlq0w1rMEKqFTyYqwMowB5BVQThuK0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=ixit.cz; spf=pass smtp.mailfrom=ixit.cz; dkim=pass (1024-bit key) header.d=ixit.cz header.i=@ixit.cz header.b=JDcNvNeN; arc=none smtp.client-ip=84.42.129.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=ixit.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ixit.cz
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=ixit.cz header.i=@ixit.cz header.b="JDcNvNeN"
+Received: from [172.16.124.192] (unknown [78.44.13.22])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange x25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by ixit.cz (Postfix) with ESMTPSA id B3FA053405A5;
+	Wed, 12 Aug 2026 13:18:44 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ixit.cz; s=dkim;
+	t=1786533525;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
+	bh=/Ul2jKtraNQpi3ITKUkHD5JY/kubfNpWZjJBe/4vMH8=;
+	b=JDcNvNeNjcGwm6QvtaPVxW0FoYSVQhl0jxg/ENc34e8Rzc3h915cGI2+KfzS+XWtOSk74W
+	PkKsXvtITTEHponJW+2VTYbppgP7TX6wrZCIqRXhC7Qj/Nv714kU1ji2PXydoeSkd4A5us
+	XMCdHIiRuC9GOaWmor3LLWoXw0Eu0x8=
+Message-ID: <e9b0c679-6a50-48ba-8ce8-684bd4b5606b@ixit.cz>
+Date: Wed, 12 Aug 2026 13:18:33 +0200
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v5 5/6] nfc: s3fwrn5: support the S3NRN4V variant
+To: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>,
+ Krzysztof Kozlowski <krzk@kernel.org>,
+ Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+ Andrew Lunn <andrew+netdev@lunn.ch>, Bjorn Andersson <andersson@kernel.org>,
+ Conor Dooley <conor+dt@kernel.org>, Conor Dooley
+ <conor.dooley@microchip.com>, "David S . Miller" <davem@davemloft.net>,
+ Eric Dumazet <edumazet@google.com>, Jakub Kicinski <kuba@kernel.org>,
+ Konrad Dybcio <konradybcio@kernel.org>,
+ Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+ Paolo Abeni <pabeni@redhat.com>, Rob Herring <robh@kernel.org>,
+ Luca Weiss <luca.weiss@fairphone.com>, devicetree@vger.kernel.org,
+ linux-arm-msm@vger.kernel.org, linux-kernel@vger.kernel.org,
+ netdev@vger.kernel.org, oe-linux-nfc@lists.linux.dev
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+ <20260811220135.472380-6-jorijnvdgraaf@catcrafts.net>
+Content-Language: en-US
+From: David Heidelberg <david@ixit.cz>
+Autocrypt: addr=david@ixit.cz; keydata=
+ xsFNBF5v1x4BEADS3EddwsNsvVAI1XF8uQKbdYPY/GhjaSLziwVnbwv5BGwqB1tfXoHnccoA
+ 9kTgKAbiXG/CiZFhD6l4WCIskQDKzyQN3JhCUIxh16Xyw0lECI7iqoW9LmMoN1dNKcUmCO9g
+ lZxQaOl+1bY/7ttd7DapLh9rmBXJ2lKiMEaIpUwb/Nw0d7Enp4Jy2TpkhPywIpUn8CoJCv3/
+ 61qbvI9y5utB/UhfMAUXsaAgwEJyGPAqHlC0YZjaTwOu+YQUE3AFzhCbksq95CwDz4U4gdls
+ dmv9tkATfu2OmzERZQ6vJTehK0Pu4l5KmCAzYg42I9Dy4E6b17x6NncKbcByQFOXMtG0qVUk
+ F1yeeOQUHwu+8t3ZDMBUhCkRL/juuoqLmyDWKMc0hKNNeZ9BNXgB8fXkRLWEUfgDXsFyEkKp
+ NxUy5bDRlivf6XfExnikk5kj9l2gGlNQwqROti/46bfbmlmc/a2GM4k8ZyalHNEAdwtXYSpP
+ 8JJmlbQ7hNTLkc3HQLRsIocN5th/ur7pPMz1Beyp0gbE9GcOceqmdZQB80vJ01XDyCAihf6l
+ AMnzwpXZsjqIqH9r7T7tM6tVEVbPSwPt4eZYXSoJijEBC/43TBbmxDX+5+3txRaSCRQrG9dY
+ k3mMGM3xJLCps2KnaqMcgUnvb1KdTgEFUZQaItw7HyRd6RppewARAQABzSBEYXZpZCBIZWlk
+ ZWxiZXJnIDxkYXZpZEBpeGl0LmN6PsLBlAQTAQgAPgIbAwULCQgHAgYVCgkICwIEFgIDAQIe
+ AQIXgBYhBNd6Cc/u3Cu9U6cEdGACP8TTSSByBQJl+KksBQkPDaAOAAoJEGACP8TTSSBy6IAQ
+ AMqFqVi9LLxCEcUWBn82ssQGiVSDniKpFE/tp7lMXflwhjD5xoftoWOmMYkiWE86t5x5Fsp7
+ afALx7SEDz599F1K1bLnaga+budu55JEAYGudD2WwpLJ0kPzRhqBwGFIx8k6F+goZJzxPDsf
+ loAtXQE62UvEKa4KRRcZmF0GGoRsgA7vE7OnV8LMeocdD3eb2CuXLzauHAfdvqF50IfPH/sE
+ jbzROiAZU+WgrwU946aOzrN8jVU+Cy8XAccGAZxsmPBfhTY5f2VN1IqvfaRdkKKlmWVJWGw+
+ ycFpAEJKFRdfcc5PSjUJcALn5C+hxzL2hBpIZJdfdfStn+DWHXNgBeRDiZj1x6vvyaC43RAb
+ VXvRzOQfG4EaMVMIOvBjBA/FtIpb1gtXA42ewhvPnd5RVCqD9YYUxsVpJ9d+XsAy7uib3BsV
+ W2idAEsPtoqhVhq8bCUs/G4sC2DdyGZK8MRFDJqciJSUbqA+5z1ZCuE8UOPDpZKiW6H/OuOM
+ zDcjh0lOzr4p+/1TSg1PbUh7fQ+nbMuiT044sC1lLtJK0+Zyn0GwhR82oNM4fldNsaHRW42w
+ QGD35+eNo5Pvb3We5XRMlBdhFnj7Siggp4J8/PJ6MJvRyC+RIJPGtbdMB2/RxWunFLn87e5w
+ UgwR9jPMHAstuTR1yR23c4SIYoQ2fzkrRzuazsFNBF5v1x4BEADnlrbta2WL87BlEOotZUh0
+ zXANMrNV15WxexsirLetfqbs0AGCaTRNj+uWlTUDJRXOVIwzmF76Us3I2796+Od2ocNpLheZ
+ 7EIkq8budtLVd1c06qJ+GMraz51zfgSIazVInNMPk9T6fz0lembji5yEcNPNNBA4sHiFmXfo
+ IhepHFOBApjS0CiOPqowYxSTPe/DLcJ/LDwWpTi37doKPhBwlHev1BwVCbrLEIFjY0MLM0aT
+ jiBBlyLJaTqvE48gblonu2SGaNmGtkC3VoQUQFcVYDXtlL9CVbNo7BAt5gwPcNqEqkUL60Jh
+ FtvVSKyQh6gn7HHsyMtgltjZ3NKjv8S3yQd7zxvCn79tCKwoeNevsvoMq/bzlKxc9QiKaRPO
+ aDj3FtW7R/3XoKJBY8Hckyug6uc2qYWRpnuXc0as6S0wfek6gauExUttBKrtSbPPHiuTeNHt
+ NsT4+dyvaJtQKPBTbPHkXpTO8e1+YAg7kPj3aKFToE/dakIh8iqUHLNxywDAamRVn8Ha67WO
+ AEAA3iklJ49QQk2ZyS1RJ2Ul28ePFDZ3QSr9LoJiOBZv9XkbhXS164iRB7rBZk6ZRVgCz3V6
+ hhhjkipYvpJ/fpjXNsVL8jvel1mYNf0a46T4QQDQx4KQj0zXJbC2fFikAtu1AULktF4iEXEI
+ rSjFoqhd4euZ+QARAQABwsF8BBgBCAAmAhsMFiEE13oJz+7cK71TpwR0YAI/xNNJIHIFAmX4
+ qVAFCQ8NoDIACgkQYAI/xNNJIHKN4A/+Ine2Ii7JiuGITjJkcV6pgKlfwYdEs4eFD1pTRb/K
+ 5dprUz3QSLP41u9OJQ23HnESMvn31UENk9ffebNoW7WxZ/8cTQY0JY/cgTTrlNXtyAlGbR3/
+ 3Q/VBJptf04Er7I6TaKAmqWzdVeKTw33LljpkHp02vrbOdylb4JQG/SginLV9purGAFptYRO
+ 8JNa2J4FAQtQTrfOUjulOWMxy7XRkqK3QqLcPW79/CFn7q1yxamPkpoXUJq9/fVjlhk7P+da
+ NYQpe4WQQnktBY29SkFnvfIAwqIVU8ix5Oz8rghuCcAdR7lEJ7hCX9bR0EE05FOXdZy5FWL9
+ GHvFa/Opkq3DPmFl/0nt4HJqq1Nwrr+WR6d0414oo1n2hPEllge/6iD3ZYwptTvOFKEw/v0A
+ yqOoYSiKX9F7Ko7QO+VnYeVDsDDevKic2T/4GDpcSVd9ipiKxCQvUAzKUH7RUpqDTa+rYurm
+ zRKcgRumz2Tc1ouHj6qINlzEe3a5ldctIn/dvR1l2Ko7GBTG+VGp9U5NOAEkGpxHG9yg6eeY
+ fFYnMme51H/HKiyUlFiE3yd5LSmv8Dhbf+vsI4x6BOOOq4Iyop/Exavj1owGxW0hpdUGcCl1
+ ovlwVPO/6l/XLAmSGwdnGqok5eGZQzSst0tj9RC9O0dXO1TZocOsf0tJ8dR2egX4kxM=
+In-Reply-To: <20260811220135.472380-6-jorijnvdgraaf@catcrafts.net>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+
+On 12/08/2026 00:01, Jorijn van der Graaf wrote:
+> The S3NRN4V (e.g. on the Fairphone 6, SM7635) is a later part in the
+> Samsung NFC controller line this driver covers. It needs different
+> bring-up, selected with a new samsung,s3nrn4v compatible:
+> 
+>   - It ships with working firmware, and its bootloader reports a
+>     hardware version this driver has no flash base address for, so the
+>     firmware download step is skipped. Its RF calibration data is
+>     loaded with the proprietary DUAL_OPTION command (the HW and SW
+>     blobs merged into a single stream) instead of the
+>     START/SET/STOP_RFREG sequence. The upload is version-gated on
+>     DUAL_OPTION GET_VER, matching the vendor stack: GET_VER reports
+>     the chip's current calibration versions, and the push is skipped
+>     when both match the blobs (each blob carries its version in its
+>     last 16 bytes). post_setup runs on every device-up, so the
+>     gate is what keeps the chip's calibration store from being rewritten
+>     each time NFC is enabled.
+> 
+>   - Its reference clock speed is configured with the single-byte FW_CFG
+>     form, sent from the ->init hook, before CORE_RESET, in the same
+>     order the vendor stack sends it. The vendor HAL uses the
+>     single-byte form for this generation, and its vendor configuration
+>     sets the selector to 0x11, which selects the 19.2 MHz reference.
+>     Without this command the chip completes NCI initialization but
+>     goes silent on RF_DISCOVER -- the command times out unanswered and
+>     polling never starts (verified on hardware).
+> 
+> The calibration data is requested from a chip-scoped directory,
+> samsung/s3nrn4v/hwreg.bin and samsung/s3nrn4v/swreg.bin, rather than
+> the flat sec_s3fwrn5_rfreg.bin name the older parts use.
+> 
+> The variant is carried as match data by both the OF and the I2C device
+> id tables so the two match paths agree.
+> 
+> Existing S3FWRN5 / S3FWRN82 setups keep the firmware-download path and
+> the legacy rfreg sequence, unchanged.
+> 
+> Assisted-by: Claude:claude-opus-4-8
+> Assisted-by: Claude:claude-fable-5
+> Assisted-by: Claude:claude-opus-5
+
+I was going to make a joke about over-assisted stuff with two-lines of 
+Assisted-by before, but... :)
+
+Here's my mental model:
+
+  - It's good to know that you used an LLM (hence Assisted-by).
+  - Someone may want to reproduce some generated code, so knowing which model was
+    used is useful.
+  - When you put THREE ;-) models there, I think it's getting a bit useless, as
+    we don't know which part was generated or adjusted by which model. At this
+    point, it feels somewhat pointless.
+
+My recommendation would be to keep just one line for the model used for:
+
+a) the majority of the changes
+b) the last model used (at least for notable changes)
+c) the most powerful model doing the generation and/or review
+
+I personally don't mind either approach. There have been discussions about 
+dropping Assisted-by completely, but so far it makes sense to me to keep it, 
+just in moderation.
+
+Also, the patchset is shaping up nicely! :)
+
+Thank you for your work,
+David
+
+[...]
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from out-2uec-a94.jellyfish.systems (out-2uec-a94.jellyfish.systems [63.250.43.94])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97976466B58
+	for <oe-linux-nfc@lists.linux.dev>; Wed, 12 Aug 2026 15:34:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=63.250.43.94
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786548877; cv=none; b=WgmJTESvo9DYgTTUk7ZYIYVhmx07e4ayybS/3HM6peY8xLUkB9NiZqh2OYHcF6GyLjX97nRfl8FBC97vvKfgkPKST6ngzzhfb7c8pK3X/djJNuUBxQO0Q4qikZi0R9kUfxfa6dGC3u5DOB+UxiH/eYbhcNDbUn9YMazzCrBQZ48=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786548877; c=relaxed/simple;
+	bh=DGa8xWr/UyQk+yJRWzmlZUl+gJtKbBMzeArK3C2vgzk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=dqC25XGdhWR/SXTqqmC5GlZHiZ0ZoStUQOGrG1AvKNEHCTBEOxquVEw9JD2lEIeIkOMPlzRsoJAY0+JzPvAHkmQq0Gzd7QOJFhbJxE9HdKTgMlthIN2+npN4fIHBcEjO55xav81XnM6NGaYRlhis8m2ZIjdLGswt04whJdtB+ek=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net; spf=pass smtp.mailfrom=catcrafts.net; arc=none smtp.client-ip=63.250.43.94
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=catcrafts.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=catcrafts.net
+Received: from mail.privateemail.com (unknown [87.215.145.39])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail.privateemail.com (Postfix) with ESMTPSA id 4hKspJ4YrVz8sWN;
+	Wed, 12 Aug 2026 15:28:40 +0000 (UTC)
+From: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+To: David Heidelberg <david@ixit.cz>
+Cc: Krzysztof Kozlowski <krzk@kernel.org>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>,
+	Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Bjorn Andersson <andersson@kernel.org>,
+	Conor Dooley <conor+dt@kernel.org>,
+	Conor Dooley <conor.dooley@microchip.com>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Konrad Dybcio <konradybcio@kernel.org>,
+	Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Rob Herring <robh@kernel.org>,
+	Luca Weiss <luca.weiss@fairphone.com>,
+	devicetree@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	netdev@vger.kernel.org,
+	oe-linux-nfc@lists.linux.dev,
+	Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+Subject: Re: [PATCH v5 5/6] nfc: s3fwrn5: support the S3NRN4V variant
+Date: Wed, 12 Aug 2026 17:28:25 +0200
+Message-ID: <20260812152825.34300-1-jorijnvdgraaf@catcrafts.net>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <e9b0c679-6a50-48ba-8ce8-684bd4b5606b@ixit.cz>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net> <20260811220135.472380-6-jorijnvdgraaf@catcrafts.net> <e9b0c679-6a50-48ba-8ce8-684bd4b5606b@ixit.cz>
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Envelope-From: jorijnvdgraaf@catcrafts.net
+
+On Wed, Aug 12, 2026 at 01:18:33PM +0200, David Heidelberg wrote:
+> > Assisted-by: Claude:claude-opus-4-8
+> > Assisted-by: Claude:claude-fable-5
+> > Assisted-by: Claude:claude-opus-5
+>
+> Here's my mental model:
+>
+>   - It's good to know that you used an LLM (hence Assisted-by).
+>   - Someone may want to reproduce some generated code, so knowing which model was
+>     used is useful.
+>   - When you put THREE ;-) models there, I think it's getting a bit useless, as
+>     we don't know which part was generated or adjusted by which model. At this
+>     point, it feels somewhat pointless.
+
+coding-assistants.rst doesn't say what to do when multiple models are
+used, and generated-content.rst says to choose transparency when in
+doubt, so I kept the tags each patch had accumulated.
+
+Currently I use claude-fable-5 as my coding assistant and
+claude-opus-5 only reviews. Earlier I used the opus models for this
+as well. Each tag was added when a model wrote code on a patch, then
+deliberately carried forward across revisions.
+
+> My recommendation would be to keep just one line for the model used for:
+>
+> a) the majority of the changes
+> b) the last model used (at least for notable changes)
+> c) the most powerful model doing the generation and/or review
+>
+> I personally don't mind either approach. There have been discussions about
+> dropping Assisted-by completely, but so far it makes sense to me to keep it,
+> just in moderation.
+
+Agreed that three lines are ambiguous. Future patches will carry a
+single Assisted-by line for the model actually being used as the
+coding assistant, or just "Assisted-by: LLM" if the simplification
+now in the docs tree lands [1]. The opus tags can be dropped from this series.
+
+Thanks,
+Jorijn
+
+[1] https://lore.kernel.org/all/87qzkuahlr.fsf@trenco.lwn.net/
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6518411F88
+	for <devicetree@vger.kernel.org>; Wed, 12 Aug 2026 22:15:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786572904; cv=none; b=PaeM+75PNlM9Pi53tSA3yEa3YXaFqh01vdqpRm0Pj0H+QblO3+ty7C5es9QtY2eXo0SQn5R8GSuZhEWhxCI/uL9M3r6x/zZrfxWrlZ4SFlmjfk/ZRtoVN4mMjZSUFtKR3TK/VSHEl8TsN0JSHN3LZzl1A8yS0NDOyWeRI9tUSAI=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786572904; c=relaxed/simple;
+	bh=mkOUZQIiv5m2PPc4SpTo8b8PYIAxEkmFwh9ZytxPBtA=;
+	h=From:Subject:To:Cc:In-Reply-To:References:Content-Type:Date:
+	 Message-Id; b=NbNFpBSe9XN5Ac/UlIYl6yuZDU89jrCuvOsSFCCrkufOo3EoVLxvnLCxhvF4MlsvAVQfUg+iu2Jp5IKZl1t8CljUfwc0PrI8PaPmVKLwF//c4Qs7XSsGTIk6LIc0Ywh1SnWGs/jESgIXaXJHgz3imNMyKj1sdibmp8FFxb6C4IM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=H6W72Lrh; arc=none smtp.client-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="H6W72Lrh"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id EEE291F000E9;
+	Wed, 12 Aug 2026 22:15:01 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1786572902;
+	bh=geJG+8Pa12U4TCaWMIBgX/dJEUjhsFHIEf3UVirUea4=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=H6W72Lrhy/Im111yUUEbIWyECjR5e4mzcehK4yh40gjDL2rnCQFNgBL8e3AO788nj
+	 orXdPnSoUF7nhEkLpQDW41NmpElg7pbPyZ3kG0aIoOPU/K92fsAESXqkMXZU5eUMEr
+	 U8mFfHDQmiaLWlthzQANCQJMVCWYzWxvjUTOLDtueZODbvgc2yo2mgSzlEo25xLig7
+	 jy+y2hwZI2tUSLgRH1eqQU3oQQ9ygrnFpBKVNsMiBeNRoVpVvPa6Uc2i5gxKjQdMYz
+	 AJ6ugx3/SgFsoyfid1Yl5jgueHfnAiGEr1g5/BKYBF2GnXkzOznX5dqfKnz/E8ps/3
+	 5tqRfUYlnqoSw==
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH v5 1/6] nfc: s3fwrn5: drop of_match_ptr() from the I2C
+ driver
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Jorijn van der Graaf" <jorijnvdgraaf@catcrafts.net>
+Cc: robh@kernel.org, devicetree@vger.kernel.org, conor+dt@kernel.org
+In-Reply-To: <20260811220135.472380-2-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+ <20260811220135.472380-2-jorijnvdgraaf@catcrafts.net>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Wed, 12 Aug 2026 22:15:01 +0000
+Message-Id: <20260812221501.EEE291F000E9@smtp.kernel.org>
+Precedence: bulk
+X-Mailing-List: devicetree@vger.kernel.org
+List-Id: <devicetree.vger.kernel.org>
+List-Subscribe: <mailto:devicetree+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:devicetree+unsubscribe@vger.kernel.org>
+
+Thank you for your contribution! Sashiko AI review found 1 potential issue(=
+s) to consider:
+
+Pre-existing issues:
+- [High] Preexisting endianness bug in S3FWRN5 firmware packet length parsi=
+ng and construction, leading to wrong length values on big-endian architect=
+ures.
+--
+
+--- Patch [1]: [PATCH v5 1/6] nfc: s3fwrn5: drop of_match_ptr() from the I2=
+C driver ---
+commit 5cffdb84b592ca672d62f53d2f736890c7d61164
+Author: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+
+nfc: s3fwrn5: drop of_match_ptr() from the I2C driver
+
+This commit drops of_match_ptr() from the I2C driver to ensure the same
+code is used across all configurations. The OF match table now relies on
+MODULE_DEVICE_TABLE() to count as used.
+
+> diff --git a/drivers/nfc/s3fwrn5/i2c.c b/drivers/nfc/s3fwrn5/i2c.c
+> index 4ba7626117118..cb73993446e09 100644
+> --- a/drivers/nfc/s3fwrn5/i2c.c
+> +++ b/drivers/nfc/s3fwrn5/i2c.c
+
+[ ... ]
+
+> @@ -219,7 +219,7 @@ MODULE_DEVICE_TABLE(of, of_s3fwrn5_i2c_match);
+>  static struct i2c_driver s3fwrn5_i2c_driver =3D {
+>  	.driver =3D {
+>  		.name =3D S3FWRN5_I2C_DRIVER_NAME,
+> -		.of_match_table =3D of_match_ptr(of_s3fwrn5_i2c_match),
+> +		.of_match_table =3D of_s3fwrn5_i2c_match,
+>  	},
+>  	.probe =3D s3fwrn5_i2c_probe,
+>  	.remove =3D s3fwrn5_i2c_remove,
+
+[Severity: High]
+This is a pre-existing issue, but does s3fwrn5_i2c_read() parse the firmware
+header length correctly on big-endian systems?
+
+Earlier in drivers/nfc/s3fwrn5/i2c.c:s3fwrn5_i2c_read():
+
+	data_len =3D (phy->common.mode =3D=3D S3FWRN5_MODE_NCI) ?
+		((struct nci_ctrl_hdr *)hdr)->plen :
+		((struct s3fwrn5_fw_header *)hdr)->len;
+
+Because struct s3fwrn5_fw_header defines len as a __u16, reading it directly
+from the packet without endianness conversion like le16_to_cpu() swaps the
+bytes on big-endian architectures.=20
+
+Can this lead to allocating an incorrectly sized skb and breaking firmware
+communication on these systems?
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20260811220135.4723=
+80-1-jorijnvdgraaf@catcrafts.net?part=3D1
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0617140F72D
+	for <devicetree@vger.kernel.org>; Wed, 12 Aug 2026 22:15:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786572907; cv=none; b=bIQvtx+tT6HkTzh9jtJrhlqec2dhaX9wGaAPJX20MhOaGonz/rSGM0uTVSuTAoDaMT0BcV2X5hC8CR8Jk/F27xQz3PaIbb2VB+fVJGtmVV9umdp/m1jeOF25Y0pBee2u9nqs9EPNB1aCLeICXfvPuWk0Nrj0vg4zCdaCYSQtky4=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786572907; c=relaxed/simple;
+	bh=AmkERV0qmgxrxwIzbusC+6ga0afCxPkt2phD04RgKyA=;
+	h=From:Subject:To:Cc:In-Reply-To:References:Content-Type:Date:
+	 Message-Id; b=AUqubssv0RoqWCjAVJhQw4pa5hskKW3/rOdXsxC1qydO2s48AbnJQioNWeZmrzw5QQ3wGgkOyVWJLG53RIkvmGu2fWloLVeoLpD7i+DT58cPt8qiKtyIv0q9a5NkPXFvH7+naDMS4swkylVsB9nsYgpE42Il/RCJ94Qi+d46DTc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KRMY8AUn; arc=none smtp.client-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KRMY8AUn"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CBD561F00A3A;
+	Wed, 12 Aug 2026 22:15:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1786572903;
+	bh=jrrik79CeaAgZZr8J+Sqb8S/NvAPGGe1OaJwSc/M4hg=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=KRMY8AUn4zv8Ksv/zAMDTqLSnVZCtz0qV2EM7dQnsU6uSVzshj735jibd53F3+M98
+	 4s7wiqo0Y7nn4/WyZyXpk5EIeP4cW2rEXYaaoBYl65tnP7ljq6b1OTBqte5nnSmY/a
+	 PlpBUOm6UYK/QGauKeuejUlz5/TqUXZ1sEFrJXBRnX3+uz6zPhzqWmE1uBXp8c4rbj
+	 25LF44EwIpht/dEnmGek6Ks5jES18ETGEmzlvXjf6pxoS+JJ0liKLFZBSzu4mL/IkN
+	 eRatjCTSlKabqwBXXtZlJ/uoD91SqQPQTDjDQcjh1nPZoV6WF7hvTqWS/2DUYfQszk
+	 RICU4W+OnBo2Q==
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH v5 6/6] arm64: dts: qcom: milos-fairphone-fp6: Add NFC
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Jorijn van der Graaf" <jorijnvdgraaf@catcrafts.net>
+Cc: conor+dt@kernel.org, devicetree@vger.kernel.org, robh@kernel.org
+In-Reply-To: <20260811220135.472380-7-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+ <20260811220135.472380-7-jorijnvdgraaf@catcrafts.net>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Wed, 12 Aug 2026 22:15:02 +0000
+Message-Id: <20260812221502.CBD561F00A3A@smtp.kernel.org>
+Precedence: bulk
+X-Mailing-List: devicetree@vger.kernel.org
+List-Id: <devicetree.vger.kernel.org>
+List-Subscribe: <mailto:devicetree+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:devicetree+unsubscribe@vger.kernel.org>
+
+Thank you for your contribution! Sashiko AI review found 1 potential issue(=
+s) to consider:
+- [Low] Missing pinctrl state for the `wake-gpios` pin (`gpio7`).
+--
+
+--- Patch [6]: [PATCH v5 6/6] arm64: dts: qcom: milos-fairphone-fp6: Add NF=
+C ---
+commit c9c7cf311411882808cc647f75e1e16f476acbf7
+Author: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+
+arm64: dts: qcom: milos-fairphone-fp6: Add NFC
+
+This commit adds the Samsung S3NRN4V NCI NFC controller on i2c1 to the
+milos-fairphone-fp6 device tree. It configures the controller's clock, power
+supply, and GPIO lines.
+
+> diff --git a/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts b/arch/arm6=
+4/boot/dts/qcom/milos-fairphone-fp6.dts
+> index ebdca0e2d2f3a..bdba848275db4 100644
+> --- a/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts
+> +++ b/arch/arm64/boot/dts/qcom/milos-fairphone-fp6.dts
+[ ... ]
+> @@ -601,9 +601,22 @@ &gcc {
+>  };
+> =20
+>  &i2c1 {
+>  	status =3D "okay";
+> +
+> +	nfc@27 {
+> +		compatible =3D "samsung,s3nrn4v";
+> +		reg =3D <0x27>;
+> +
+> +		interrupts-extended =3D <&tlmm 31 IRQ_TYPE_EDGE_RISING>;
+> +		en-gpios =3D <&tlmm 56 GPIO_ACTIVE_HIGH>;
+> +		wake-gpios =3D <&tlmm 7 GPIO_ACTIVE_HIGH>;
+> +		clocks =3D <&rpmhcc RPMH_LN_BB_CLK2>;
+> +
+> +		pvdd-supply =3D <&vreg_l20b>;
+> +
+> +		pinctrl-0 =3D <&nfc_default>;
+> +		pinctrl-names =3D "default";
+> +	};
+>  };
+[ ... ]
+> @@ -825,6 +838,22 @@ &tlmm {
+>  			       <13 1>, /* NC */
+>  			       <63 2>; /* WLAN UART */
+> =20
+> +	nfc_default: nfc-default-state {
+> +		irq-pins {
+> +			pins =3D "gpio31";
+> +			function =3D "gpio";
+> +			drive-strength =3D <2>;
+> +			bias-disable;
+> +		};
+> +
+> +		pd-pins {
+> +			pins =3D "gpio56";
+> +			function =3D "gpio";
+> +			drive-strength =3D <2>;
+> +			bias-pull-up;
+> +		};
+> +	};
+
+[Severity: Low]
+Should the pad configuration for gpio7 (used for wake-gpios) be included in
+this pinctrl state?
+
+The nfc@27 node defines wake-gpios on gpio7, but nfc_default only configures
+the drive strength and bias for gpio31 (irq) and gpio56 (pd/en). This leaves
+the wake-gpios pad configuration to hardware defaults or the bootloader sta=
+te.
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20260811220135.4723=
+80-1-jorijnvdgraaf@catcrafts.net?part=3D6
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8DA536DA15
+	for <devicetree@vger.kernel.org>; Wed, 12 Aug 2026 22:15:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786572907; cv=none; b=a0Rxy8bqBjprwL1gNnI+5xuMDudskkk0tp4YkxokUTL+8Q/mAugeepp4/9Il7sThULeF6uXJNs90Un69MiOGPQWRXrXehCdoO6ILYKAWPbowToj9OYlNSUph4Qko/qVbr3+k3TTy1RP5AC6ox+x4vivDI7V5sZwbrkJoH3wf3vU=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786572907; c=relaxed/simple;
+	bh=YDyfijvbwkh+/pE9okvN/f11bMGGIz9SM6OfF4gFlkA=;
+	h=From:Subject:To:Cc:In-Reply-To:References:Content-Type:Date:
+	 Message-Id; b=bvF2RNl8QrX5f7MBc5F4/S/Dg5dWEhmBuTVuBR4qe+lkV8PYiqI2ocNUXjagPA4J49/ALDtMGd1UrNyiwGl6k0UzSIaz1h7+RvWTS+JQjPhvYGLm87a2DRp5JcxXSpeXlGcByjRFoDeYDtJjA+71osptnExmnwB+edcwf/YuIAs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jam9Kyy0; arc=none smtp.client-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jam9Kyy0"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9AAF61F00A3D;
+	Wed, 12 Aug 2026 22:15:03 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1786572903;
+	bh=04P+rpdPNtSyL+x0EvQ3ObQICvkcfOUjIXmSRli588Y=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=jam9Kyy01HWsTgWExh/o5imOVudOORO7O5foZ8K7/wy6XhppwJVjVm901AR3ENABd
+	 sAN1KbfT94EXZcH/zf7slZxGn3RR6DSWv6lA2CKom9972OMZkSX2vxhn3Dkz5t6D5a
+	 zgUItbFHhBb1ij2zqc5LjS2NtPWh7VeiLoDTzoT2hWSqLuGvRkUeVwBCWQ1/co/5qm
+	 FZN2c4lc7+Qgzd0RfsYkIR2D1dVEnG05sa/7V3bT0IRwXpuKjx9puDZEa8NfBaLZmG
+	 r8GVkmY8y0Z+wi2qEqJtQycAnc/xiYD+ePH5eRZDkCvtWMpvGaFmGqv9S01MH8p5v1
+	 wwYomkid8SRRg==
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH v5 5/6] nfc: s3fwrn5: support the S3NRN4V variant
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Jorijn van der Graaf" <jorijnvdgraaf@catcrafts.net>
+Cc: devicetree@vger.kernel.org, conor+dt@kernel.org, robh@kernel.org
+In-Reply-To: <20260811220135.472380-6-jorijnvdgraaf@catcrafts.net>
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+ <20260811220135.472380-6-jorijnvdgraaf@catcrafts.net>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Wed, 12 Aug 2026 22:15:03 +0000
+Message-Id: <20260812221503.9AAF61F00A3D@smtp.kernel.org>
+Precedence: bulk
+X-Mailing-List: devicetree@vger.kernel.org
+List-Id: <devicetree.vger.kernel.org>
+List-Subscribe: <mailto:devicetree+subscribe@vger.kernel.org>
+List-Unsubscribe: <mailto:devicetree+unsubscribe@vger.kernel.org>
+
+Thank you for your contribution! Sashiko AI review found 2 potential issue(=
+s) to consider:
+- [High] Missing error check on nci_prop_cmd() for GET_VER causes command-r=
+esponse desynchronization on timeouts.
+- [High] Hardware error statuses are ignored because the driver checks for =
+negative return values instead of non-zero.
+--
+
+--- Patch [5]: [PATCH v5 5/6] nfc: s3fwrn5: support the S3NRN4V variant ---
+commit fe1c1a464a09b355d0a14c76e391f1834e4afedf
+Author: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+
+nfc: s3fwrn5: support the S3NRN4V variant
+
+Adds support for the Samsung S3NRN4V NFC controller, which requires a new
+calibration data bring-up sequence and different clock speed configuration.
+
+> diff --git a/drivers/nfc/s3fwrn5/nci.c b/drivers/nfc/s3fwrn5/nci.c
+> --- a/drivers/nfc/s3fwrn5/nci.c
+> +++ b/drivers/nfc/s3fwrn5/nci.c
+
+[ ... ]
+
+> +int s3fwrn5_nci_rf_configure_dual(struct s3fwrn5_info *info,
+> +				  const char *hw_name, const char *sw_name)
+> +{
+
+[ ... ]
+
+> +	/*
+> +	 * Ask the chip for its current calibration versions and skip the
+> +	 * upload when both already match the blobs; a mismatch or an
+> +	 * unparseable answer means the upload proceeds. GET_VER answers with
+> +	 * versions, not a status byte, so nci_prop_cmd()'s return carries no
+> +	 * meaning here.
+> +	 */
+> +	sub_oid =3D NCI_PROP_DUAL_SUB_GET_VER;
+> +	info->dual_rsp_len =3D 0;
+> +	nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION, 1, &sub_oid);
+> +	if (s3fwrn5_nci_dual_cal_current(info, hw_fw, sw_fw)) {
+
+[Severity: High]
+Is it safe to completely ignore the return value of nci_prop_cmd() here?
+
+If the hardware is slow to respond to the initial GET_VER command,
+nci_prop_cmd() will return -ETIMEDOUT. Continuing directly to START_UPDATE
+without checking for this timeout might cause command-response
+desynchronization.
+
+A late response to the timed-out GET_VER command could arrive while waiting
+for the START_UPDATE response, which might silently corrupt the sequence
+since all DUAL_OPTION sub-commands share the same NCI opcode.
+
+> +		dev_dbg(dev, "calibration data already current\n");
+> +		ret =3D 0;
+> +		goto out_sw;
+> +	}
+> +
+> +	merged =3D kvmalloc(merged_size, GFP_KERNEL);
+> +	if (!merged) {
+
+[ ... ]
+
+> +	/* SET_OPTION per section */
+> +	set_option.sub_oid =3D NCI_PROP_DUAL_SUB_SET_OPTION;
+> +	set_option.index =3D 0;
+> +	for (i =3D 0; i < merged_size; i +=3D NCI_PROP_DUAL_SECTION_SIZE) {
+> +		len =3D min_t(size_t, merged_size - i, NCI_PROP_DUAL_SECTION_SIZE);
+> +		memcpy(set_option.data, merged + i, len);
+> +		ret =3D nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION,
+> +				   len + 2, (__u8 *)&set_option);
+> +		if (ret < 0) {
+
+[Severity: High]
+Does this check miss positive hardware error statuses?
+
+When the chip rejects a command, it returns a positive NCI status byte
+(like NCI_STATUS_REJECTED, 0x09). The driver's RX handler passes this status
+to nci_req_complete(), which sets req_result. nci_prop_cmd() then returns
+this positive integer.
+
+Checking only for ret < 0 might cause the driver to ignore hardware
+rejections and erroneously consider the upload chunks successful. Should th=
+is
+check for ret !=3D 0 instead?
+
+> +			dev_err(dev, "calibration data update error: %d\n",
+> +				ret);
+> +			/* Abort form: STOP_UPDATE with the sub-OID alone. */
+> +			sub_oid =3D NCI_PROP_DUAL_SUB_STOP_UPDATE;
+> +			nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION, 1,
+> +				     &sub_oid);
+> +			goto out;
+> +		}
+> +		set_option.index++;
+> +	}
+> +
+> +	/* STOP_UPDATE with checksum */
+> +	stop_cmd[0] =3D NCI_PROP_DUAL_SUB_STOP_UPDATE;
+> +	put_unaligned_le16(checksum, &stop_cmd[1]);
+> +	ret =3D nci_prop_cmd(info->ndev, NCI_PROP_DUAL_OPTION, 3, stop_cmd);
+> +	if (ret < 0) {
+
+[Severity: High]
+Similarly, would a positive error status from the hardware on STOP_UPDATE be
+missed here due to the ret < 0 check?
+
+> +		dev_err(dev, "Unable to stop calibration data update\n");
+> +		goto out;
+> +	}
+> +
+> +	dev_dbg(dev, "calibration data update: success\n");
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20260811220135.4723=
+80-1-jorijnvdgraaf@catcrafts.net?part=3D5
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 56B743C65E0
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 18 Aug 2026 10:27:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1787048859; cv=none; b=oUYva1FHGp5S2MdCPgggJDtwFGMtBWY/Wb13N6sl5hc+diBqz0J65G3wOjv4Na6b6pQX7Yw+OxHfZj176cwvFL6iJA4qIBzrdK5tTuZKJ4R86KckAA61xn9BjyIdM0ydebQUefG4OSdEvrG08klvuIUPbu7Z01lJD7iQp3Fs+QI=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1787048859; c=relaxed/simple;
+	bh=qzVduJq5GdVNzfjCOi6IYK/AGsAYiirXHMuWBR5pY6M=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=TU8g0ocOEz2r+3BZE71mSoED6WOlN34Ui3BsiJpp2/FiCckDMxsnZPhJIJDltt3+gl0lmIJrhvoUX+6Gtl4vI3uBqmXpKpAYF0Y1FQJtqZUN4lM7LZDSPxFlXNDGNawusUAa9pwATVPlWon60Leyl0MMwMeLtnkrEAp6LfvUVaU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=oss.qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=PchoZbV0; dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b=U6hKLWjH; arc=none smtp.client-ip=205.220.168.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oss.qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="PchoZbV0";
+	dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b="U6hKLWjH"
+Received: from pps.filterd (m0279864.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 67IABl6S068849
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 18 Aug 2026 10:27:37 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
+	kbAw28JEMDtsVhR/iRFJoE82+XonCmoCsrWXqTH4a6I=; b=PchoZbV0KUbr4cVv
+	pqYicGS389HO7wkBfrbAxIwrMP5B0dwDc1c7hzD6zE+C6B89rB8Qit96iKeW5O1x
+	89PHNnfolz7ua/md1UbTN71YtmKMDux8bs8djS5N+vKqEf/Yr0iZUVQBWdOV4eUD
+	R4p25oPtf0XkJJAIGXROex6rU0auIcuLaax1iFxXyu3Lm1O0by5hJHm/J3x36Ww4
+	B3ETSZxK0MP0AKL9Y0qDmRbEOdgPW97Z0UeXDi1+gRPuocIap7+c6EvYwWsWjorp
+	idnRcaIc81lxN9ZOABVyvfwpAAnIPo11V/yi4BCRG91IP/Z37jhPyp/4sc5uqkSe
+	PrqGug==
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com [209.85.222.197])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4g4f5psqav-1
+	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NOT)
+	for <oe-linux-nfc@lists.linux.dev>; Tue, 18 Aug 2026 10:27:37 +0000 (GMT)
+Received: by mail-qk1-f197.google.com with SMTP id af79cd13be357-93494b1e35cso4972685a.0
+        for <oe-linux-nfc@lists.linux.dev>; Tue, 18 Aug 2026 03:27:37 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=oss.qualcomm.com; s=google; t=1787048856; x=1787653656; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=kbAw28JEMDtsVhR/iRFJoE82+XonCmoCsrWXqTH4a6I=;
+        b=U6hKLWjHxKz1n5EyqWOIX6lxUBIXcMpFzEAwI3Mzj9jotpYlCrepNnAVMq9fO85WgG
+         MZdjQoMNuZeeLGf4VAaekRWh3z5kBcmnGcV0oHeYSH/TSbpY+29X01DYT/aU4XOqM7jt
+         qnllVWAhdG3xaKmapg7o+mo4hnmc49n3V5A5d8jwRkyXDBKFArLgXuBR4haCsFhBGwD1
+         Fs9agT/+bIy3Y5RTZftM9KmaPyBRWGy0uJduYGzE/ed3jeGWrsIF2g+8W7oqHybW0tb7
+         dT2+TXGnHV8kj0edqv30bnWR2CPTZC6IWwaEDDkNhdmjc2RGJdiz6btumGzh/AGd7rTH
+         bXOw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1787048856; x=1787653656;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=kbAw28JEMDtsVhR/iRFJoE82+XonCmoCsrWXqTH4a6I=;
+        b=Fr254zn9EATHj/pbfBv08ioPXlUngSi8aouOklJ6quuCuQFq37IK8U1HF5DiATtztp
+         Komqn3LJMpsDcdHL+Dago9TCRosylGAfL/O8ZrGRLRw9XinH/xsWpsqyX/42RP0ChSpB
+         7QY7qqtCJLTPUONz4h4EWuyj9FcIRDSAR3p7LhZAHfvS9dk1zCsvo9P/vfFP07YHdRFU
+         L56Zs3x8tmRvJYs/lBp+3JGvxI8mpZl1U6g7V2Cx4sSQE8gIh4ZkOpr8/h0o4WccWtjY
+         tpJH+/ZwtcPUQ6YuIQUgQ8vy8KC6GzBd2v/Bgb5dBUynR+fEhwz0LTWUDKY174bPsf9l
+         xpmw==
+X-Forwarded-Encrypted: i=1; AHgh+RpqUyzV3/J7ymlXfMaAtXTTIbor1XFhVsIcMumnRKLjOjrnuuCKhOIspxml2AZupgpKQrg+NMHAWHhK8T0=@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx7Qr9cnjqKYQdxrKiyiQLetqetbHJlTxGpIBQij9nb8Zqhrt4q
+	7SulhPy+y3UST6hxeLxc5pqMxDHBMGN1IBf7HwVwSfjgAXaiE54rAEz2bLj0FSW2J7Is1OPLTCS
+	K73xmUWITW7KFXEM12BPHjh3J0/qVnOtb5tQKeUY2honmOlvqH9tnQWDBBR5T245lxN4=
+X-Gm-Gg: AR+sD11I0uD8mLhbh8EoIBwglWT+BoOLQkdFw/2U8arZtfTsZWYodAuHVrfA9IfFZ1Z
+	I3DEpvXss16oe9AtBQgFi+g1GLzkWnMIcUpsycmPhXLCinnJj9AGxwIULmO8uM/ltqX4V0ZOfXr
+	y2/iRMFPUDvk8ov2qpKNMLwvPqYkN7YkmQl4DjqQuDn3cZpLCEYiqbq2Yc1VAcNc9uAJgGUDFq0
+	QGcvZ1VhUwduFLXLSOybtBssSD+jBax8EWIsSkuWPpIt8s8NEuwJi7XCYnuzHA2DY5BoWlzmcpV
+	V7CciK+uUw+zW1qBHuG7+ZTcTZAYQ+HOI1E3Yk/cbbaxkDCAHjepgXxS7vNrNrZoWcHBPsrzqV4
+	DZV8qgVvyujqCNKhRJbz3EGdN
+X-Received: by 2002:a05:622a:190a:b0:51c:2324:666 with SMTP id d75a77b69052e-52d85425e6fmr252266201cf.3.1787048856544;
+        Tue, 18 Aug 2026 03:27:36 -0700 (PDT)
+X-Received: by 2002:a05:622a:190a:b0:51c:2324:666 with SMTP id d75a77b69052e-52d85425e6fmr252265751cf.3.1787048856096;
+        Tue, 18 Aug 2026 03:27:36 -0700 (PDT)
+Received: from [192.168.120.193] ([178.235.128.140])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6a3d859b274sm1576957a12.25.2026.08.18.03.27.32
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 18 Aug 2026 03:27:34 -0700 (PDT)
+Message-ID: <8c04340d-6d19-4292-a873-7ded67caacca@oss.qualcomm.com>
+Date: Tue, 18 Aug 2026 12:27:31 +0200
+Precedence: bulk
+X-Mailing-List: oe-linux-nfc@lists.linux.dev
+List-Id: <oe-linux-nfc.lists.linux.dev>
+List-Subscribe: <mailto:oe-linux-nfc+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:oe-linux-nfc+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v5 6/6] arm64: dts: qcom: milos-fairphone-fp6: Add NFC
+To: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>,
+        David Heidelberg <david@ixit.cz>,
+        Krzysztof Kozlowski <krzk@kernel.org>,
+        Krzysztof Kozlowski <krzk+dt@kernel.org>
+Cc: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>,
+        Andrew Lunn <andrew+netdev@lunn.ch>,
+        Bjorn Andersson <andersson@kernel.org>,
+        Conor Dooley <conor+dt@kernel.org>,
+        Conor Dooley
+ <conor.dooley@microchip.com>,
+        "David S . Miller" <davem@davemloft.net>,
+        Eric Dumazet <edumazet@google.com>, Jakub Kicinski <kuba@kernel.org>,
+        Konrad Dybcio <konradybcio@kernel.org>,
+        Paolo Abeni <pabeni@redhat.com>, Rob Herring <robh@kernel.org>,
+        Luca Weiss <luca.weiss@fairphone.com>, devicetree@vger.kernel.org,
+        linux-arm-msm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        netdev@vger.kernel.org, oe-linux-nfc@lists.linux.dev
+References: <20260811220135.472380-1-jorijnvdgraaf@catcrafts.net>
+ <20260811220135.472380-7-jorijnvdgraaf@catcrafts.net>
+Content-Language: en-US
+From: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+In-Reply-To: <20260811220135.472380-7-jorijnvdgraaf@catcrafts.net>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-Authority-Analysis: v=2.4 cv=S+/pBosP c=1 sm=1 tr=0 ts=6a843399 cx=c_pps
+ a=50t2pK5VMbmlHzFWWp8p/g==:117 a=PRfkaYvzSr8QmIIGAkY2Sg==:17
+ a=IkcTkHD0fZMA:10 a=Sv0fKeRqtYgA:10 a=s4-Qcg_JpJYA:10
+ a=VkNPw1HP01LnGYTKEx00:22 a=u7WPNUs3qKkmUXheDGA7:22 a=DJpcGTmdVt4CTyJn9g5Z:22
+ a=GYSh3LzNAAAA:8 a=EUspDBNiAAAA:8 a=Dd_GrI0rTSTmvMZCxHUA:9 a=QEXdDO2ut3YA:10
+ a=IoWCM6iH3mJn3m4BftBB:22 a=lWcdFasyL5yHfcDTNXXo:22
+X-Proofpoint-GUID: 5XHBkEBa6S3lpLo4Lx-Pm-VQUheWeHpr
+X-Proofpoint-ORIG-GUID: 5XHBkEBa6S3lpLo4Lx-Pm-VQUheWeHpr
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwODE4MDA3NiBTYWx0ZWRfXxJTFwsXDlWxe
+ o/SKf5jWWETAMp2N8kwNqWDoRYO4sT175Xqi+0EtmRfoyIPe+FKtpO5lgm5ldOPbcfe0qPEp6JO
+ j+64cioGiZ31pa1s0ygbTUabTKRYqpGJM9gCBgLqI8Nn9zUiG+ZdYtU90g0XhtovmM9oRITFjgD
+ oMBp8LBTZ1VJZAOQJHoGa9PqKi8XQGWjAHBkwGlTNOpY0gsxzXTxUjCzcnZyNqW7eocbvURQkDj
+ 4gq6pCcnUWMSfjJNnUv4j1A5WTvI9YeQQroNhqUNNJC73xj0H84zOhtG1qW1plDhZeAij+Tuxs2
+ 3BLJ/HBvRp1g7d7D9vbJdQHA266nhPLqbWcZUYOG+iErgxMc3uZYS7plE8cUFMO67gs/xWqbk/+
+ IymNBmlivt6B+UcB7W1KW7BbplUPIDaD4ndPlNJh4US5RpZmrxjN5t3O40qM072fgEWXplJrCW9
+ fM4z7j8JT6axdz3Zb3Q==
+X-Proofpoint-Spam-Info: AW1haW4tMjYwODE4MDA3NiBTYWx0ZWRfX+J8v6WH7d1T7
+ kpenB9ZFoFaOjYx+l1dL4YGoGkOhALg+9dP5yXbef7u3Y5DNYDCF+LLofi7GbX5p8KFsqYFPED2
+ yFbQe8vfSkz3x3bWXSVxDZf38SgN9Jw=
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
+ definitions=2026-08-18_01,2026-08-12_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ suspectscore=0 phishscore=0 malwarescore=0 spamscore=0 lowpriorityscore=0
+ clxscore=1011 bulkscore=0 impostorscore=0 adultscore=0 priorityscore=1501
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2606150000 definitions=main-2608180076
+
+On 8/12/26 12:01 AM, Jorijn van der Graaf wrote:
+> Add the Samsung S3NRN4V NCI NFC controller on i2c1. Its XI clock comes
+> from the PMK7635 CLK7_LN buffer (RPMH_LN_BB_CLK2), and the reference is
+> load-bearing: with no clocks reference at all the chip polls but never
+> activates a tag, while a held rpmh clock vote lets it read (verified on
+> hardware).
+
+hw generally works better when plugged in!
+
+> PVDD is fed from PM7550 LDO20, the rail the downstream driver switches
+> for this chip.
+> 
+> The enable line is routed to the chip's power-down input. The driver
+> drives its "en" descriptor to logical 1 to hold the chip powered down,
+> and on this board the chip is off while the pin is physically high, so
+> the line is GPIO_ACTIVE_HIGH. The pin is pulled up so the chip stays
+> off while the line is not driven.
+> 
+> Assisted-by: Claude:claude-opus-4-8
+> Assisted-by: Claude:claude-fable-5
+> Signed-off-by: Jorijn van der Graaf <jorijnvdgraaf@catcrafts.net>
+> ---
+
+Reviewed-by: Konrad Dybcio <konrad.dybcio@oss.qualcomm.com>
+
+Konrad
+

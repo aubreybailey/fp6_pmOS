@@ -18,6 +18,9 @@ questions, kept up to date rather than historical.
   this device, so this repo is the actual source of truth for them):
   - `android-device-control/` — reconnecting adb/Termux:API to control this
     phone (screen, input, sensors) from Termux.
+  - `kernel-device-porting/` — device-agnostic method for enabling
+    hardware on a kernel: finding existing work, sourcing real wiring,
+    applying/backporting series, the no-hardware build-test ladder.
   - `postmarketos-dev/` — the build environment (proot Alpine + abuild),
     known proot limitations and workarounds, and the real dual-boot plan
     for flashing to slot B.

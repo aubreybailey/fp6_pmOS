@@ -1,0 +1,161 @@
+From 777fd2dab44601ea7f59a104e9553e3eb7329782 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig=20=28The=20Capable=20Hub=29?=
+ <u.kleine-koenig@baylibre.com>
+Date: Fri, 3 Jul 2026 17:46:21 +0200
+Subject: [PATCH] nfc: Drop __maybe_unused from of_device_id tables
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Referencing these arrays in MODULE_DEVICE_TABLE() is enough to convince
+the compiler that they are used even if the drivers are built-in (since
+5ab23c7923a1 ("modpost: Create modalias for builtin modules"). So the
+__maybe_unused marking can be removed without introducing a compiler
+warning.
+
+Signed-off-by: Uwe Kleine-König (The Capable Hub) <u.kleine-koenig@baylibre.com>
+Link: https://patch.msgid.link/031ea0ae38838df3261f844eb13e9841769b49a7.1783091699.git.u.kleine-koenig@baylibre.com
+Signed-off-by: David Heidelberg <david@ixit.cz>
+---
+ drivers/nfc/nfcmrvl/i2c.c  | 2 +-
+ drivers/nfc/nfcmrvl/spi.c  | 2 +-
+ drivers/nfc/pn533/i2c.c    | 2 +-
+ drivers/nfc/pn544/i2c.c    | 2 +-
+ drivers/nfc/s3fwrn5/i2c.c  | 2 +-
+ drivers/nfc/st-nci/i2c.c   | 2 +-
+ drivers/nfc/st-nci/spi.c   | 2 +-
+ drivers/nfc/st21nfca/i2c.c | 2 +-
+ drivers/nfc/st95hf/core.c  | 2 +-
+ drivers/nfc/trf7970a.c     | 2 +-
+ 10 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/nfc/nfcmrvl/i2c.c b/drivers/nfc/nfcmrvl/i2c.c
+index 66877a7d03f2a4..687d2979b88132 100644
+--- a/drivers/nfc/nfcmrvl/i2c.c
++++ b/drivers/nfc/nfcmrvl/i2c.c
+@@ -245,7 +245,7 @@ static void nfcmrvl_i2c_remove(struct i2c_client *client)
+ }
+ 
+ 
+-static const struct of_device_id of_nfcmrvl_i2c_match[] __maybe_unused = {
++static const struct of_device_id of_nfcmrvl_i2c_match[] = {
+ 	{ .compatible = "marvell,nfc-i2c", },
+ 	{},
+ };
+diff --git a/drivers/nfc/nfcmrvl/spi.c b/drivers/nfc/nfcmrvl/spi.c
+index dad07c8e13b84d..5c04c2489603b6 100644
+--- a/drivers/nfc/nfcmrvl/spi.c
++++ b/drivers/nfc/nfcmrvl/spi.c
+@@ -185,7 +185,7 @@ static void nfcmrvl_spi_remove(struct spi_device *spi)
+ 	nfcmrvl_nci_unregister_dev(drv_data->priv);
+ }
+ 
+-static const struct of_device_id of_nfcmrvl_spi_match[] __maybe_unused = {
++static const struct of_device_id of_nfcmrvl_spi_match[] = {
+ 	{ .compatible = "marvell,nfc-spi", },
+ 	{},
+ };
+diff --git a/drivers/nfc/pn533/i2c.c b/drivers/nfc/pn533/i2c.c
+index 94aca9119f0f9e..2128083f02973c 100644
+--- a/drivers/nfc/pn533/i2c.c
++++ b/drivers/nfc/pn533/i2c.c
+@@ -236,7 +236,7 @@ static void pn533_i2c_remove(struct i2c_client *client)
+ 	pn53x_common_clean(phy->priv);
+ }
+ 
+-static const struct of_device_id of_pn533_i2c_match[] __maybe_unused = {
++static const struct of_device_id of_pn533_i2c_match[] = {
+ 	{ .compatible = "nxp,pn532", },
+ 	/*
+ 	 * NOTE: The use of the compatibles with the trailing "...-i2c" is
+diff --git a/drivers/nfc/pn544/i2c.c b/drivers/nfc/pn544/i2c.c
+index b731d0b02f526e..50907a1974cdd6 100644
+--- a/drivers/nfc/pn544/i2c.c
++++ b/drivers/nfc/pn544/i2c.c
+@@ -937,7 +937,7 @@ static void pn544_hci_i2c_remove(struct i2c_client *client)
+ 		pn544_hci_i2c_disable(phy);
+ }
+ 
+-static const struct of_device_id of_pn544_i2c_match[] __maybe_unused = {
++static const struct of_device_id of_pn544_i2c_match[] = {
+ 	{ .compatible = "nxp,pn544-i2c", },
+ 	{},
+ };
+diff --git a/drivers/nfc/s3fwrn5/i2c.c b/drivers/nfc/s3fwrn5/i2c.c
+index e9a34d27a36984..499301a6fa3fb2 100644
+--- a/drivers/nfc/s3fwrn5/i2c.c
++++ b/drivers/nfc/s3fwrn5/i2c.c
+@@ -210,7 +210,7 @@ static const struct i2c_device_id s3fwrn5_i2c_id_table[] = {
+ };
+ MODULE_DEVICE_TABLE(i2c, s3fwrn5_i2c_id_table);
+ 
+-static const struct of_device_id of_s3fwrn5_i2c_match[] __maybe_unused = {
++static const struct of_device_id of_s3fwrn5_i2c_match[] = {
+ 	{ .compatible = "samsung,s3fwrn5-i2c", },
+ 	{}
+ };
+diff --git a/drivers/nfc/st-nci/i2c.c b/drivers/nfc/st-nci/i2c.c
+index f43ae8e92070b4..ceb7d7450e47d8 100644
+--- a/drivers/nfc/st-nci/i2c.c
++++ b/drivers/nfc/st-nci/i2c.c
+@@ -269,7 +269,7 @@ static const struct acpi_device_id st_nci_i2c_acpi_match[] = {
+ };
+ MODULE_DEVICE_TABLE(acpi, st_nci_i2c_acpi_match);
+ 
+-static const struct of_device_id of_st_nci_i2c_match[] __maybe_unused = {
++static const struct of_device_id of_st_nci_i2c_match[] = {
+ 	{ .compatible = "st,st21nfcb-i2c", },
+ 	{ .compatible = "st,st21nfcb_i2c", },
+ 	{ .compatible = "st,st21nfcc-i2c", },
+diff --git a/drivers/nfc/st-nci/spi.c b/drivers/nfc/st-nci/spi.c
+index 9303217acd7b80..8632cc0cb30592 100644
+--- a/drivers/nfc/st-nci/spi.c
++++ b/drivers/nfc/st-nci/spi.c
+@@ -283,7 +283,7 @@ static const struct acpi_device_id st_nci_spi_acpi_match[] = {
+ };
+ MODULE_DEVICE_TABLE(acpi, st_nci_spi_acpi_match);
+ 
+-static const struct of_device_id of_st_nci_spi_match[] __maybe_unused = {
++static const struct of_device_id of_st_nci_spi_match[] = {
+ 	{ .compatible = "st,st21nfcb-spi", },
+ 	{}
+ };
+diff --git a/drivers/nfc/st21nfca/i2c.c b/drivers/nfc/st21nfca/i2c.c
+index 13fb6f5533e0d8..4e70f591af552b 100644
+--- a/drivers/nfc/st21nfca/i2c.c
++++ b/drivers/nfc/st21nfca/i2c.c
+@@ -583,7 +583,7 @@ static const struct acpi_device_id st21nfca_hci_i2c_acpi_match[] = {
+ };
+ MODULE_DEVICE_TABLE(acpi, st21nfca_hci_i2c_acpi_match);
+ 
+-static const struct of_device_id of_st21nfca_i2c_match[] __maybe_unused = {
++static const struct of_device_id of_st21nfca_i2c_match[] = {
+ 	{ .compatible = "st,st21nfca-i2c", },
+ 	{ .compatible = "st,st21nfca_i2c", },
+ 	{}
+diff --git a/drivers/nfc/st95hf/core.c b/drivers/nfc/st95hf/core.c
+index ffe5b4eab457fb..1ecd47c6518e8a 100644
+--- a/drivers/nfc/st95hf/core.c
++++ b/drivers/nfc/st95hf/core.c
+@@ -1054,7 +1054,7 @@ static const struct spi_device_id st95hf_id[] = {
+ };
+ MODULE_DEVICE_TABLE(spi, st95hf_id);
+ 
+-static const struct of_device_id st95hf_spi_of_match[] __maybe_unused = {
++static const struct of_device_id st95hf_spi_of_match[] = {
+ 	{ .compatible = "st,st95hf" },
+ 	{},
+ };
+diff --git a/drivers/nfc/trf7970a.c b/drivers/nfc/trf7970a.c
+index eba00a8cb5c0ff..a2f0d1fd3b9236 100644
+--- a/drivers/nfc/trf7970a.c
++++ b/drivers/nfc/trf7970a.c
+@@ -2303,7 +2303,7 @@ static const struct dev_pm_ops trf7970a_pm_ops = {
+ 			   trf7970a_pm_runtime_resume, NULL)
+ };
+ 
+-static const struct of_device_id trf7970a_of_match[] __maybe_unused = {
++static const struct of_device_id trf7970a_of_match[] = {
+ 	{.compatible = "ti,trf7970a",},
+ 	{},
+ };

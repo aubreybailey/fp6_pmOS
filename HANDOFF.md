@@ -38,9 +38,11 @@ into what pmOS actually ships, and verifying the undocumented areas.
    is an S3NRN4V, and an upstream series in review (Jorijn van der Graaf,
    v5 as of Aug 2026) adds driver support; tag reading works with it,
    card emulation doesn't exist anywhere yet. So the job is now:
-   - Fetch that series from lore/ratatoskr (the real patches, not a
-     summary), apply to `v7.2.0-milos`, build-test (toolchain notes in
-     `skills/postmarketos-dev/reference/setup.md`).
+   - DONE 2026-09-26: v5 fetched (patchwork), applied to `v7.2.0-milos`
+     with two prerequisite backports, and passes every non-hardware check
+     (Kconfig, DTB, driver W=1, dt_binding_check, CHECK_DTBS). Exact
+     recipe and results: `patches/nfc/upstream-s3nrn4v-v5/README.md`.
+     What's left is the hardware test, which is on you.
    - On hardware, sanity check with `i2cdetect -y 1` (anything at
      `0x27`?) and `dmesg | grep -iE "s3nrn|s3fwrn|nfc|i2c"`, then try an
      NDEF tag read. Report probe failure modes precisely.
